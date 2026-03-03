@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 class CD4051BE {
   private:
     int _pinA;

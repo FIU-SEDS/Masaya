@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include "CD4051BE.h" 
 
 CD4051BE::CD4051BE(int pinA, int pinB, int pinC) {
