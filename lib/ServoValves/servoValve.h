@@ -14,6 +14,7 @@ class servoValve {
     void begin();
     void close();
     void open();
+    void variable(int degree);
 };
 
 #endif

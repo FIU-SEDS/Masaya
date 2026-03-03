@@ -16,3 +16,7 @@ void servoValve::close() {
 void servoValve::open() {
     _servo.write(180);
 }
+
+void servoValve::variable(int degree){
+    _servo.write(degree);
+}
