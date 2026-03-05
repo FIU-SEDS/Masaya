@@ -1,18 +1,18 @@
 #include <Arduino.h>
+#include <servoValve.h>
 
-// put function declarations here:
-int myFunction(int, int);
+#define sv1Pin PA5
+
+servoValve sv1(PA5);
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  sv1.begin();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  sv1.open();
+  delay(600);
+  sv1.close();
+  delay(600);
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
-}
