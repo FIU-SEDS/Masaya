@@ -1,3 +1,8 @@
+#ifndef CD4051BE_H
+#define CD4051BE_H
+
+#include <Arduino.h>
+
 class CD4051BE {
   private:
     int _pinA;
@@ -11,3 +16,5 @@ class CD4051BE {
     void selectChannel(int channel);
     void channelReset();
 };
+
+#endif
