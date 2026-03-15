@@ -1,5 +1,5 @@
 import sys, os, socket
-from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox
+from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 
@@ -31,7 +31,7 @@ class UDPListener(QThread):
 class DiagramWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Piping Diagram")
+        self.setWindowTitle("Masaya Control")
         self.resize(1500, 900)
         self.setMaximumSize(1500, 900)
 
@@ -178,10 +178,20 @@ class DiagramWindow(QMainWindow):
         self.TC02OX.adjustSize()
 
     def START_Test(self):
-        self.PT01F.setText("Start")
+        if(self.SEV04OX.isChecked()):
+            self.PT01F.setText("Start")
+        else:
+            self.popUp = QMessageBox(self)
+            self.popUp.setWindowTitle("Warning")
+            self.popUp.setText("MAKE SURE EVERYTHING IS GOOD")
+            self.popUp.exec()
+
+        
 
     def STOP_Test(self):
         self.PT01F.setText("STOP")
+
+    
 
     
 
