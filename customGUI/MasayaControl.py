@@ -1,11 +1,9 @@
 import sys, os, socket
-from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 
-
 class UDPListener(QThread):
-    # Signal that sends the received string to the main thread
     data_received = pyqtSignal(str)
 
     def __init__(self, ip="192.168.1.100", port=5005):
@@ -35,43 +33,60 @@ class DiagramWindow(QMainWindow):
         self.resize(1333, 800)
         self.setFixedSize(1333, 800)
 
-        label = QLabel()
+        # 1. Set up the Tab Widget as the Central Widget
+        self.tabs = QTabWidget()
+        self.tabs.setTabPosition(QTabWidget.TabPosition.West)
+        self.tabs.setMovable(True)
+        self.setCentralWidget(self.tabs)
+
+        # 2. Create a container widget for the first tab
+        self.tab1 = QWidget()
+        self.tabs.addTab(self.tab1, "Cold Flow")
+
+        # 3. Parent the background image to tab1
+        label = QLabel(self.tab1)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         label.setPixmap(QPixmap(os.path.join(script_dir, "assets", "PID_Masaya.png")))
         label.setScaledContents(True)
         label.setMinimumSize(1333, 800)
         label.setMaximumSize(1333, 800)
-        self.setCentralWidget(label)
 
-        label_style = "color: white; font-size: 18px; font-weight: bold;"
-
+        
         self.name = QLabel("Cold Flow Test", label)
-        self.name.move(18, 18)
-        self.name.setStyleSheet(label_style)
+        self.name.setStyleSheet("font-family: 'Consolas'; font: arial; color: white; font-size: 30px; font-weight: bold;")
 
 
-        self.step1 = QCheckBox("Step1",self)
-        self.step1.setStyleSheet(label_style)
+        
+        # 4. Parent checkboxes and buttons to tab1 instead of self
+
+
+        self.servoSpeed = QComboBox()
+        self.servoSpeed.addItems(["Servo Speed","0.3 Seconds - Fastest", "0.6 Seconds - (Recommended) Moderate Closing Time", "1 Second - Slowest Closing Time"])
+        self.servoSpeed.adjustSize()
+
+
+        self.step1 = QCheckBox("Step1", self.tab1)
+        self.step1.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
         self.step1.adjustSize()
 
-        self.step2 = QCheckBox("Step2",self)
-        self.step2.setStyleSheet(label_style)
+        self.step2 = QCheckBox("Step2", self.tab1)
+        self.step2.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
         self.step2.adjustSize()
 
-
         self.checkBoxes = QVBoxLayout()
+        self.checkBoxes.addWidget(self.name)
+        self.checkBoxes.addWidget(self.servoSpeed)
         self.checkBoxes.addWidget(self.step1)
         self.checkBoxes.addWidget(self.step2)
 
-        self.checkBoxContainer = QWidget(self)
+        self.checkBoxContainer = QWidget(self.tab1)
         self.checkBoxContainer.setLayout(self.checkBoxes)
-        self.checkBoxContainer.move(18, 178) 
+        self.checkBoxContainer.move(18, 10)
         self.checkBoxContainer.adjustSize()
-        
 
-        self.START = QPushButton("GO", self)
-        self.START.move(18, 658) 
-        self.START.resize(267, 44) 
+        self.START = QPushButton("GO", self.tab1)
+        self.START.move(18, 658)
+        self.START.resize(267, 44)
         self.START.setStyleSheet("""
             QPushButton {
                 color: white; 
@@ -85,9 +100,9 @@ class DiagramWindow(QMainWindow):
         """)
         self.START.clicked.connect(self.GO)
 
-        self.STOP = QPushButton("STOP", self)
-        self.STOP.move(18, 711) 
-        self.STOP.resize(267, 71) 
+        self.STOP = QPushButton("STOP", self.tab1)
+        self.STOP.move(18, 711)
+        self.STOP.resize(267, 71)
         self.STOP.setStyleSheet("""
             QPushButton {
                 color: white; 
@@ -101,10 +116,11 @@ class DiagramWindow(QMainWindow):
         """)
         self.STOP.clicked.connect(self.STOP_Test)
 
+        label_style = "color: white; font-size: 18px; font-weight: bold;"
 
-        # Load Cells 
+        # Load Cells
         self.LC01F = QLabel("12345", label)
-        self.LC01F.move(590, 418) 
+        self.LC01F.move(590, 418)
         self.LC01F.setStyleSheet(label_style)
         self.LC01F.adjustSize()
 
@@ -115,12 +131,12 @@ class DiagramWindow(QMainWindow):
         
         # Thermal Couplers
         self.TC01F = QLabel("12345", label)
-        self.TC01F.move(204, 496) 
+        self.TC01F.move(204, 496)
         self.TC01F.setStyleSheet(label_style)
         self.TC01F.adjustSize()
 
         self.TC02OX = QLabel("12345", label)
-        self.TC02OX.move(204, 288) 
+        self.TC02OX.move(204, 288)
         self.TC02OX.setStyleSheet(label_style)
         self.TC02OX.adjustSize()
 
@@ -180,7 +196,6 @@ class DiagramWindow(QMainWindow):
         self.PT09OX.setStyleSheet(label_style)
         self.PT09OX.adjustSize()
 
-
         self.udp_thread = UDPListener(ip="192.168.1.100", port=5005)
         self.udp_thread.data_received.connect(self.update_SENSORS)  
         self.udp_thread.start()
@@ -193,7 +208,7 @@ class DiagramWindow(QMainWindow):
         if(self.step1.isChecked() and not self.step2.isChecked()):
             self.popUp = QMessageBox(self)
             self.popUp.setWindowTitle("Warning")
-            self.popUp.setText("Second Step isn't complete\nDo the Following: \nMake sure Manual Valves are open\n")
+            self.popUp.setText("First Step Complete, opening Valves: \n- PT-09-OX\n- PT-01-F\n Second Step isn't complete\nDo the Following: \nMake sure Manual Valves are open\n")
             self.popUp.exec()
         elif(self.step1.isChecked() and self.step2.isChecked()):
             self.popUp = QMessageBox(self)
@@ -208,7 +223,6 @@ class DiagramWindow(QMainWindow):
 
     def STOP_Test(self):
         self.PT01F.setText("STOP")
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
