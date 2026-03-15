@@ -1,5 +1,5 @@
 import sys, os, socket
-from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox
+from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 
@@ -47,10 +47,32 @@ class DiagramWindow(QMainWindow):
         self.name.move(20,20)
         self.name.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
 
-        self.SEV04OX = QCheckBox("SEV-04-OX",self)
-        self.SEV04OX.move(20,200)
-        self.SEV04OX.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
-        self.SEV04OX.adjustSize()
+
+        self.step1 = QCheckBox("Step1",self)
+        self.step1.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
+        self.step1.adjustSize()
+
+        self.step2 = QCheckBox("Step2",self)
+        self.step2.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
+        self.step2.adjustSize()
+
+
+        self.checkBoxes = QVBoxLayout()
+        self.checkBoxes.addWidget(self.step1)
+        self.checkBoxes.addWidget(self.step2)
+
+        self.checkBoxContainer = QWidget(self)
+
+        self.checkBoxContainer.setLayout(self.checkBoxes)
+
+        self.checkBoxContainer.move(20, 200)
+
+        self.checkBoxContainer.adjustSize()
+        
+
+
+
+
 
         self.START = QPushButton("START", self)
         self.START.move(20,740)
@@ -178,7 +200,7 @@ class DiagramWindow(QMainWindow):
         self.TC02OX.adjustSize()
 
     def START_Test(self):
-        if(self.SEV04OX.isChecked()):
+        if(self.step1.isChecked()):
             self.PT01F.setText("Start")
         else:
             self.popUp = QMessageBox(self)
