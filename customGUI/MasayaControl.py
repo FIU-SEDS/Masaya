@@ -33,17 +33,14 @@ class DiagramWindow(QMainWindow):
         self.resize(1333, 800)
         self.setFixedSize(1333, 800)
 
-        # 1. Set up the Tab Widget as the Central Widget
         self.tabs = QTabWidget()
         self.tabs.setTabPosition(QTabWidget.TabPosition.West)
         self.tabs.setMovable(True)
         self.setCentralWidget(self.tabs)
 
-        # 2. Create a container widget for the first tab
         self.tab1 = QWidget()
         self.tabs.addTab(self.tab1, "Cold Flow")
 
-        # 3. Parent the background image to tab1
         label = QLabel(self.tab1)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         label.setPixmap(QPixmap(os.path.join(script_dir, "assets", "PID_Masaya.png")))
@@ -54,10 +51,6 @@ class DiagramWindow(QMainWindow):
         
         self.name = QLabel("Cold Flow Test", label)
         self.name.setStyleSheet("font-family: 'Consolas'; font: arial; color: white; font-size: 30px; font-weight: bold;")
-
-
-        
-        # 4. Parent checkboxes and buttons to tab1 instead of self
 
 
         self.servoSpeed = QComboBox()
@@ -119,79 +112,79 @@ class DiagramWindow(QMainWindow):
         label_style = "color: white; font-size: 18px; font-weight: bold;"
 
         # Load Cells
-        self.LC01F = QLabel("12345", label)
+        self.LC01F = QLabel("-----", label)
         self.LC01F.move(590, 418)
         self.LC01F.setStyleSheet(label_style)
         self.LC01F.adjustSize()
 
-        self.LC02OX = QLabel("12345", label)
+        self.LC02OX = QLabel("-----", label)
         self.LC02OX.move(590, 364)
         self.LC02OX.setStyleSheet(label_style)
         self.LC02OX.adjustSize()
         
         # Thermal Couplers
-        self.TC01F = QLabel("12345", label)
+        self.TC01F = QLabel("-----", label)
         self.TC01F.move(204, 496)
         self.TC01F.setStyleSheet(label_style)
         self.TC01F.adjustSize()
 
-        self.TC02OX = QLabel("12345", label)
+        self.TC02OX = QLabel("-----", label)
         self.TC02OX.move(204, 288)
         self.TC02OX.setStyleSheet(label_style)
         self.TC02OX.adjustSize()
 
-        self.TC03OX = QLabel("12345", label)
+        self.TC03OX = QLabel("-----", label)
         self.TC03OX.move(830, 251)
         self.TC03OX.setStyleSheet(label_style)
         self.TC03OX.adjustSize()
 
-        self.TC02F = QLabel("12345", label)
+        self.TC02F = QLabel("-----", label)
         self.TC02F.move(827, 530)
         self.TC02F.setStyleSheet(label_style)
         self.TC02F.adjustSize()
 
         # PT Sensors
-        self.PT01F = QLabel("12345", label)
+        self.PT01F = QLabel("-----", label)
         self.PT01F.move(396, 496)
         self.PT01F.setStyleSheet(label_style)
         self.PT01F.adjustSize()
 
-        self.PT02F = QLabel("12345", label)
+        self.PT02F = QLabel("-----", label)
         self.PT02F.move(586, 630)
         self.PT02F.setStyleSheet(label_style)
         self.PT02F.adjustSize()
 
-        self.PT03F = QLabel("12345", label)
+        self.PT03F = QLabel("-----", label)
         self.PT03F.move(787, 630)
         self.PT03F.setStyleSheet(label_style)
         self.PT03F.adjustSize()
 
-        self.PT04F = QLabel("12345", label)
+        self.PT04F = QLabel("-----", label)
         self.PT04F.move(1052, 530)
         self.PT04F.setStyleSheet(label_style)
         self.PT04F.adjustSize()
 
-        self.PT05E = QLabel("12345", label)
+        self.PT05E = QLabel("-----", label)
         self.PT05E.move(1208, 452)
         self.PT05E.setStyleSheet(label_style)
         self.PT05E.adjustSize()
 
-        self.PT06OX = QLabel("12345", label)
+        self.PT06OX = QLabel("-----", label)
         self.PT06OX.move(1052, 251)
         self.PT06OX.setStyleSheet(label_style)
         self.PT06OX.adjustSize()
 
-        self.PT07OX = QLabel("12345", label)
+        self.PT07OX = QLabel("-----", label)
         self.PT07OX.move(787, 140)
         self.PT07OX.setStyleSheet(label_style)
         self.PT07OX.adjustSize()
 
-        self.PT08OX = QLabel("12345", label)
+        self.PT08OX = QLabel("-----", label)
         self.PT08OX.move(584, 140)
         self.PT08OX.setStyleSheet(label_style)
         self.PT08OX.adjustSize()
 
-        self.PT09OX = QLabel("12345", label)
+        self.PT09OX = QLabel("-----", label)
         self.PT09OX.move(396, 288)
         self.PT09OX.setStyleSheet(label_style)
         self.PT09OX.adjustSize()
