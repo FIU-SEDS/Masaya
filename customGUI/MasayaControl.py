@@ -1,7 +1,8 @@
 import sys, os, socket
-from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox
+from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
+import pyqtgraph as pg
 
 class UDPListener(QThread):
     data_received = pyqtSignal(str)
@@ -38,10 +39,23 @@ class DiagramWindow(QMainWindow):
         self.tabs.setMovable(True)
         self.setCentralWidget(self.tabs)
 
+        # All Tabs
+
         self.tab1 = QWidget()
         self.tabs.addTab(self.tab1, "Main/Schem")
 
-        
+        self.tab2 = QWidget()
+        self.tabs.addTab(self.tab2, "N2 Lines")
+
+        self.tab3 = QWidget()
+        self.tabs.addTab(self.tab3, "N2O Lines")
+
+        self.tab4 = QWidget()
+        self.tabs.addTab(self.tab4, "IPA Lines")
+
+        self.tab5 = QWidget()
+        self.tabs.addTab(self.tab5, "Import")
+
 
         label = QLabel(self.tab1)
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -98,10 +112,6 @@ class DiagramWindow(QMainWindow):
         self.topRightContainer.setLayout(self.topRight)
         self.topRightContainer.move(1050, 10)
         self.topRightContainer.adjustSize()
-
-
-
-
 
 
         self.START = QPushButton("GO", self.tab1)
@@ -216,9 +226,40 @@ class DiagramWindow(QMainWindow):
         self.PT09OX.setStyleSheet(label_style)
         self.PT09OX.adjustSize()
 
+
+
+        # Tab 2 Section
+
+        self.TC02OX_graph = pg.PlotWidget()       
+
+        x_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        y_data = [30, 32, 34, 32, 33, 31, 29, 32, 35, 45]
+
+        self.TC02OX_graph.setBackground('k')
+        self.TC02OX_graph.setTitle("Temperature over Time", color="b", size="15pt")
+        self.TC02OX_graph.setLabel('left', 'Temperature (°C)', color='red', size='12pt')
+        self.TC02OX_graph.setLabel('bottom', 'Hour', color='red', size='12pt')
+        self.TC02OX_graph.showGrid(x=True, y=True)
+        
+
+        pen = pg.mkPen(color=(255, 0, 0), width=3) 
+        
+        self.TC02OX_graph.plot(x_data, y_data, pen=pen, symbol='o', symbolSize=8, symbolBrush=('b'))
+
+
+        self.n2Charts = QGridLayout(self.tab2)
+        self.n2Charts.addWidget(self.TC02OX_graph, 0,0)
+        self.n2Charts.addWidget(self.PT09OX, 0,1)
+        self.n2Charts.addWidget(self.TC01F, 1,0)
+        self.n2Charts.addWidget(self.PT01F, 1,1)
+
+
+
+
         self.udp_thread = UDPListener(ip="192.168.1.100", port=5005)
-        self.udp_thread.data_received.connect(self.update_SENSORS)  
+        self.udp_thread.data_received.connect(self.update_SENSORS)
         self.udp_thread.start()
+
 
     def update_SENSORS(self, value):
         self.TC02OX.setText(value)
