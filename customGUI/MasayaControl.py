@@ -39,7 +39,9 @@ class DiagramWindow(QMainWindow):
         self.setCentralWidget(self.tabs)
 
         self.tab1 = QWidget()
-        self.tabs.addTab(self.tab1, "Cold Flow")
+        self.tabs.addTab(self.tab1, "Main/Schem")
+
+        
 
         label = QLabel(self.tab1)
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -50,13 +52,12 @@ class DiagramWindow(QMainWindow):
 
         
         self.name = QLabel("Cold Flow Test", label)
-        self.name.setStyleSheet("font-family: 'Consolas'; font: arial; color: white; font-size: 30px; font-weight: bold;")
+        self.name.setStyleSheet("font-family: 'Consolas'; font: arial; color: white; font-size: 35px; font-weight: bold;")
 
 
         self.servoSpeed = QComboBox()
         self.servoSpeed.addItems(["Servo Speed","0.3 Seconds - Fastest", "0.6 Seconds - (Recommended) Moderate Closing Time", "1 Second - Slowest Closing Time"])
         self.servoSpeed.adjustSize()
-
 
         self.step1 = QCheckBox("Step1", self.tab1)
         self.step1.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
@@ -66,16 +67,42 @@ class DiagramWindow(QMainWindow):
         self.step2.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
         self.step2.adjustSize()
 
-        self.checkBoxes = QVBoxLayout()
-        self.checkBoxes.addWidget(self.name)
-        self.checkBoxes.addWidget(self.servoSpeed)
-        self.checkBoxes.addWidget(self.step1)
-        self.checkBoxes.addWidget(self.step2)
+        self.topLeft = QVBoxLayout()
+        self.topLeft.addWidget(self.name)
+        self.topLeft.addWidget(self.servoSpeed)
+        self.topLeft.addWidget(self.step1)
+        self.topLeft.addWidget(self.step2)
 
-        self.checkBoxContainer = QWidget(self.tab1)
-        self.checkBoxContainer.setLayout(self.checkBoxes)
-        self.checkBoxContainer.move(18, 10)
-        self.checkBoxContainer.adjustSize()
+        self.topLeftContainer = QWidget(self.tab1)
+        self.topLeftContainer.setLayout(self.topLeft)
+        self.topLeftContainer.move(18, 10)
+        self.topLeftContainer.adjustSize()
+
+
+        self.statusTitle = QLabel("Status", self.tab1)
+        self.statusTitle.setStyleSheet("color: white; font-size: 25px; font-weight: bold;")
+        self.statusTitle.adjustSize()
+
+        self.status = QLabel("🔴 DAQ Not Found", self.tab1)
+        self.status.setStyleSheet("font-family: 'Consolas'; color: white; font-size: 20px; font-weight: bold;")
+        self.status.adjustSize()
+
+
+
+        self.topRight = QVBoxLayout()
+        self.topRight.addWidget(self.statusTitle)
+        self.topRight.addWidget(self.status)
+        
+
+        self.topRightContainer = QWidget(self.tab1)
+        self.topRightContainer.setLayout(self.topRight)
+        self.topRightContainer.move(1050, 10)
+        self.topRightContainer.adjustSize()
+
+
+
+
+
 
         self.START = QPushButton("GO", self.tab1)
         self.START.move(18, 658)
