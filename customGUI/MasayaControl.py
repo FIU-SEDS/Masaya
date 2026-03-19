@@ -54,7 +54,10 @@ class DiagramWindow(QMainWindow):
         self.tabs.addTab(self.tab4, "IPA Lines")
 
         self.tab5 = QWidget()
-        self.tabs.addTab(self.tab5, "Import")
+        self.tabs.addTab(self.tab5, "LC/Thrust")
+
+        self.tab6 = QWidget()
+        self.tabs.addTab(self.tab6, "Import")
 
 
         label = QLabel(self.tab1)
@@ -97,7 +100,8 @@ class DiagramWindow(QMainWindow):
         self.statusTitle.setStyleSheet("color: white; font-size: 25px; font-weight: bold;")
         self.statusTitle.adjustSize()
 
-        self.status = QLabel("🔴 DAQ Not Found", self.tab1)
+        self.status = QLabel('<span style="color: red; font-size: 20pt;">●</span> DAQ Not Found', self.tab1) #HTML TO Make Circle
+
         self.status.setStyleSheet("font-family: 'Consolas'; color: white; font-size: 20px; font-weight: bold;")
         self.status.adjustSize()
 
@@ -146,7 +150,7 @@ class DiagramWindow(QMainWindow):
         """)
         self.STOP.clicked.connect(self.STOP_Test)
 
-        
+
 
         label_style = "color: white; font-size: 18px; font-weight: bold;"
 
@@ -168,46 +172,48 @@ class DiagramWindow(QMainWindow):
             lbl.adjustSize()
             self.sensors[name] = lbl
 
-
-
         # Tab 2 Section
 
-        self.TC02OX_graph = pg.PlotWidget()       
-
-        x_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        y_data = [30, 32, 34, 32, 33, 31, 29, 32, 35, 45]
-
-        self.TC02OX_graph.setBackground('k')
-        self.TC02OX_graph.setTitle("Temperature over Time", color="b", size="15pt")
-        self.TC02OX_graph.setLabel('left', 'Temperature (°C)', color='red', size='12pt')
-        self.TC02OX_graph.setLabel('bottom', 'Hour', color='red', size='12pt')
-        self.TC02OX_graph.showGrid(x=True, y=True)
-        
-
-        pen = pg.mkPen(color=(255, 0, 0), width=3) 
-        
-        self.TC02OX_graph.plot(x_data, y_data, pen=pen, symbol='o', symbolSize=8, symbolBrush=('b'))
-
-
-        self.PT09OX_graph = pg.PlotWidget()  
-
-        self.PT09OX_graph.setBackground('k')
-
-        self.TC01F_graph = pg.PlotWidget()  
-
-        self.TC01F_graph.setBackground('k')
-
-        self.PT01F_graph = pg.PlotWidget()  
-
-        self.PT01F_graph.setBackground('k')
-
-
-
         self.n2Charts = QGridLayout(self.tab2)
-        self.n2Charts.addWidget(self.TC02OX_graph, 0,0)
-        self.n2Charts.addWidget(self.PT09OX_graph, 0,1)
-        self.n2Charts.addWidget(self.TC01F_graph, 1,0)
-        self.n2Charts.addWidget(self.PT01F_graph, 1,1)
+        self.n2oCharts = QGridLayout(self.tab3)
+        self.ipaCharts = QGridLayout(self.tab4)
+        self.otherCharts = QGridLayout(self.tab5)
+
+
+        label_style = "color: white; font-size: 18px; font-weight: bold;"
+
+        sensor_configs_graphs = [
+            ("LC01F", self.otherCharts, 0,0), ("LC02OX", self.otherCharts, 0,1),
+            ("TC01F", self.n2Charts, 1,0), ("TC02OX", self.n2Charts, 0, 0), ("TC03OX", self.n2oCharts, 1, 0), ("TC02F", self.ipaCharts, 1, 0),
+            ("PT01F", self.n2Charts, 1, 1), ("PT02F", self.ipaCharts, 0, 0), ("PT03F", self.ipaCharts, 0, 1), ("PT04F", self.ipaCharts, 1, 1), 
+            ("PT05E", self.otherCharts, 0,2), ("PT06OX", self.n2oCharts, 1, 1), ("PT07OX", self.n2oCharts, 0, 1), ("PT08OX",self.n2oCharts, 0, 0),
+            ("PT09OX", self.n2Charts, 0, 1)
+
+        ]
+
+        self.sensorsGraphs = {}
+
+        for name, tab, x, y in sensor_configs_graphs:
+            gph = pg.PlotWidget()
+            gph.setBackground('k')
+            gph.setTitle(name, color="w", size="20pt", bold=True)
+            if name[:2] == "TC":
+                gph.setLabel('left', 'Temperature (°C)', color='red', size='12pt')
+                gph.setLabel('bottom', 'Hour', color='red', size='12pt')
+            elif name[:2] == "PT":
+                gph.setLabel('left', 'Pressure (PSI)', color='red', size='12pt')
+                gph.setLabel('bottom', 'Hour', color='red', size='12pt')
+            elif name[:2] == "LC":
+                gph.setLabel('left', 'Grams (PSI)', color='red', size='12pt')
+                gph.setLabel('bottom', 'Hour', color='red', size='12pt')
+            
+            tab.addWidget(gph,x,y)
+
+            self.sensorsGraphs[name] = gph
+        
+
+        # pen = pg.mkPen(color=(255, 0, 0), width=3) 
+
 
 
         # Tab 3 Section
