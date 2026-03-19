@@ -247,11 +247,28 @@ class DiagramWindow(QMainWindow):
         self.TC02OX_graph.plot(x_data, y_data, pen=pen, symbol='o', symbolSize=8, symbolBrush=('b'))
 
 
+        self.PT09OX_graph = pg.PlotWidget()  
+
+        self.PT09OX_graph.setBackground('k')
+
+        self.TC01F_graph = pg.PlotWidget()  
+
+        self.TC01F_graph.setBackground('k')
+
+        self.PT01F_graph = pg.PlotWidget()  
+
+        self.PT01F_graph.setBackground('k')
+
+
+
         self.n2Charts = QGridLayout(self.tab2)
         self.n2Charts.addWidget(self.TC02OX_graph, 0,0)
-        self.n2Charts.addWidget(self.PT09OX, 0,1)
-        self.n2Charts.addWidget(self.TC01F, 1,0)
-        self.n2Charts.addWidget(self.PT01F, 1,1)
+        self.n2Charts.addWidget(self.PT09OX_graph, 0,1)
+        self.n2Charts.addWidget(self.TC01F_graph, 1,0)
+        self.n2Charts.addWidget(self.PT01F_graph, 1,1)
+
+
+        # Tab 3 Section
 
 
 
