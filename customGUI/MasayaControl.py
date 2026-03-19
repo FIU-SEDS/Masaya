@@ -146,85 +146,27 @@ class DiagramWindow(QMainWindow):
         """)
         self.STOP.clicked.connect(self.STOP_Test)
 
+        
+
         label_style = "color: white; font-size: 18px; font-weight: bold;"
 
-        # Load Cells
-        self.LC01F = QLabel("-----", label)
-        self.LC01F.move(590, 418)
-        self.LC01F.setStyleSheet(label_style)
-        self.LC01F.adjustSize()
+        sensor_configs = [
+            ("LC01F", 590, 418), ("LC02OX", 590, 364),
+            ("TC01F", 204, 496), ("TC02OX", 204, 288), ("TC03OX", 830, 251), ("TC02F", 827, 530),
+            ("PT01F", 396, 496), ("PT02F", 586, 630), ("PT03F", 787, 630), ("PT04F",1052, 530), 
+            ("PT05E",1208, 452), ("PT06OX", 1052, 251), ("PT07OX", 787, 140), ("PT08OX",584, 140),
+            ("PT09OX",396, 288)
 
-        self.LC02OX = QLabel("-----", label)
-        self.LC02OX.move(590, 364)
-        self.LC02OX.setStyleSheet(label_style)
-        self.LC02OX.adjustSize()
-        
-        # Thermal Couplers
-        self.TC01F = QLabel("-----", label)
-        self.TC01F.move(204, 496)
-        self.TC01F.setStyleSheet(label_style)
-        self.TC01F.adjustSize()
+        ]
 
-        self.TC02OX = QLabel("-----", label)
-        self.TC02OX.move(204, 288)
-        self.TC02OX.setStyleSheet(label_style)
-        self.TC02OX.adjustSize()
+        self.sensors = {}
 
-        self.TC03OX = QLabel("-----", label)
-        self.TC03OX.move(830, 251)
-        self.TC03OX.setStyleSheet(label_style)
-        self.TC03OX.adjustSize()
-
-        self.TC02F = QLabel("-----", label)
-        self.TC02F.move(827, 530)
-        self.TC02F.setStyleSheet(label_style)
-        self.TC02F.adjustSize()
-
-        # PT Sensors
-        self.PT01F = QLabel("-----", label)
-        self.PT01F.move(396, 496)
-        self.PT01F.setStyleSheet(label_style)
-        self.PT01F.adjustSize()
-
-        self.PT02F = QLabel("-----", label)
-        self.PT02F.move(586, 630)
-        self.PT02F.setStyleSheet(label_style)
-        self.PT02F.adjustSize()
-
-        self.PT03F = QLabel("-----", label)
-        self.PT03F.move(787, 630)
-        self.PT03F.setStyleSheet(label_style)
-        self.PT03F.adjustSize()
-
-        self.PT04F = QLabel("-----", label)
-        self.PT04F.move(1052, 530)
-        self.PT04F.setStyleSheet(label_style)
-        self.PT04F.adjustSize()
-
-        self.PT05E = QLabel("-----", label)
-        self.PT05E.move(1208, 452)
-        self.PT05E.setStyleSheet(label_style)
-        self.PT05E.adjustSize()
-
-        self.PT06OX = QLabel("-----", label)
-        self.PT06OX.move(1052, 251)
-        self.PT06OX.setStyleSheet(label_style)
-        self.PT06OX.adjustSize()
-
-        self.PT07OX = QLabel("-----", label)
-        self.PT07OX.move(787, 140)
-        self.PT07OX.setStyleSheet(label_style)
-        self.PT07OX.adjustSize()
-
-        self.PT08OX = QLabel("-----", label)
-        self.PT08OX.move(584, 140)
-        self.PT08OX.setStyleSheet(label_style)
-        self.PT08OX.adjustSize()
-
-        self.PT09OX = QLabel("-----", label)
-        self.PT09OX.move(396, 288)
-        self.PT09OX.setStyleSheet(label_style)
-        self.PT09OX.adjustSize()
+        for name, x, y in sensor_configs:
+            lbl = QLabel("-----", label)
+            lbl.move(x, y)
+            lbl.setStyleSheet(label_style)
+            lbl.adjustSize()
+            self.sensors[name] = lbl
 
 
 
@@ -271,16 +213,14 @@ class DiagramWindow(QMainWindow):
         # Tab 3 Section
 
 
-
-
         self.udp_thread = UDPListener(ip="192.168.1.100", port=5005)
         self.udp_thread.data_received.connect(self.update_SENSORS)
         self.udp_thread.start()
 
 
     def update_SENSORS(self, value):
-        self.TC02OX.setText(value)
-        self.TC02OX.adjustSize()
+        self.sensors["LC01F"].setText(value)
+        self.sensors["LC01F"].adjustSize()
 
     def GO(self):
         if(self.step1.isChecked() and not self.step2.isChecked()):
@@ -300,7 +240,7 @@ class DiagramWindow(QMainWindow):
             self.popUp.exec()
 
     def STOP_Test(self):
-        self.PT01F.setText("STOP")
+        self.sensors["PT01F"].setText("STOP")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
