@@ -169,7 +169,7 @@ class DiagramWindow(QMainWindow):
             lbl = QLabel("-----", label)
             lbl.move(x, y)
             lbl.setStyleSheet(label_style)
-            lbl.adjustSize()
+            lbl.setFixedWidth(80)
             self.sensors[name] = lbl
 
         # Tab 2 Section
