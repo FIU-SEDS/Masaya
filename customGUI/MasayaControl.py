@@ -67,6 +67,7 @@ class DiagramWindow(QMainWindow):
         label.setMinimumSize(1333, 800)
         label.setMaximumSize(1333, 800)
 
+        # Main Page top left (Title/Servo Speed/Steps)
         
         self.name = QLabel("Cold Flow Test", label)
         self.name.setStyleSheet("font-family: 'Consolas'; font: arial; color: white; font-size: 35px; font-weight: bold;")
@@ -90,11 +91,12 @@ class DiagramWindow(QMainWindow):
         self.topLeft.addWidget(self.step1)
         self.topLeft.addWidget(self.step2)
 
-        self.topLeftContainer = QWidget(self.tab1)
+        self.topLeftContainer = QWidget(self.tab1) # Container that contains top left
         self.topLeftContainer.setLayout(self.topLeft)
         self.topLeftContainer.move(18, 10)
         self.topLeftContainer.adjustSize()
 
+        # Main Page top right (Status)
 
         self.statusTitle = QLabel("Status", self.tab1)
         self.statusTitle.setStyleSheet("color: white; font-size: 25px; font-weight: bold;")
@@ -105,18 +107,16 @@ class DiagramWindow(QMainWindow):
         self.status.setStyleSheet("font-family: 'Consolas'; color: white; font-size: 20px; font-weight: bold;")
         self.status.adjustSize()
 
-
-
         self.topRight = QVBoxLayout()
         self.topRight.addWidget(self.statusTitle)
         self.topRight.addWidget(self.status)
         
-
-        self.topRightContainer = QWidget(self.tab1)
+        self.topRightContainer = QWidget(self.tab1) # Container that contains top right
         self.topRightContainer.setLayout(self.topRight)
         self.topRightContainer.move(1050, 10)
         self.topRightContainer.adjustSize()
 
+        # Go and Stop Button Created
 
         self.START = QPushButton("GO", self.tab1)
         self.START.move(18, 658)
@@ -150,7 +150,7 @@ class DiagramWindow(QMainWindow):
         """)
         self.STOP.clicked.connect(self.STOP_Test)
 
-
+        # Main Page Schem Labels
 
         label_style = "color: white; font-size: 18px; font-weight: bold;"
 
@@ -172,15 +172,14 @@ class DiagramWindow(QMainWindow):
             lbl.setFixedWidth(80)
             self.sensors[name] = lbl
 
-        # Tab 2 Section
+        # Other Tabs, All Charts 
 
         self.n2Charts = QGridLayout(self.tab2)
         self.n2oCharts = QGridLayout(self.tab3)
         self.ipaCharts = QGridLayout(self.tab4)
         self.otherCharts = QGridLayout(self.tab5)
 
-
-        label_style = "color: white; font-size: 18px; font-weight: bold;"
+        # Easy creation of all charts, contains chart's name/position/x&y grid cords
 
         sensor_configs_graphs = [
             ("LC01F", self.otherCharts, 0,0), ("LC02OX", self.otherCharts, 0,1),
@@ -197,6 +196,9 @@ class DiagramWindow(QMainWindow):
             gph = pg.PlotWidget()
             gph.setBackground('k')
             gph.setTitle(name, color="w", size="20pt", bold=True)
+
+            #Depending on Sensor type, label changes
+
             if name[:2] == "TC":
                 gph.setLabel('left', 'Temperature (°C)', color='red', size='12pt')
                 gph.setLabel('bottom', 'Hour', color='red', size='12pt')
@@ -213,7 +215,6 @@ class DiagramWindow(QMainWindow):
         
 
         # pen = pg.mkPen(color=(255, 0, 0), width=3) 
-
 
 
         # Tab 3 Section
