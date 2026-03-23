@@ -59,6 +59,9 @@ class DiagramWindow(QMainWindow):
         self.tab6 = QWidget()
         self.tabs.addTab(self.tab6, "Import")
 
+        self.tab7 = QWidget()
+        self.tabs.addTab(self.tab7, "Leak Test")
+
 
         label = QLabel(self.tab1)
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -223,6 +226,27 @@ class DiagramWindow(QMainWindow):
         self.udp_thread = UDPListener(ip="192.168.1.100", port=5005)
         self.udp_thread.data_received.connect(self.update_SENSORS)
         self.udp_thread.start()
+
+
+        # Leak Test Tab
+
+        self.leakTest = QGridLayout(self.tab7)
+        self.testName = QLabel("Leak Test")
+        self.testName.setStyleSheet("font-family: 'Consolas'; font: arial; color: white; font-size: 35px; font-weight: bold;")
+        self.leakTest.addWidget(self.testName, 0,0)
+
+        self.e9 = QCheckBox("E.9")
+        self.e9.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
+
+        self.e10 = QCheckBox("E.10")
+        self.e10.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
+
+        self.leakTestBox = QVBoxLayout()
+        self.leakTestBox.addWidget(self.e9)
+        self.leakTestBox.addWidget(self.e10)
+
+        self.leakTest.addLayout(self.leakTestBox,1,0)
+
 
 
     def update_SENSORS(self, value):
