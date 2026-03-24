@@ -80,11 +80,11 @@ class DiagramWindow(QMainWindow):
         self.servoSpeed.addItems(["Servo Speed","0.3 Seconds - Fastest", "0.6 Seconds - (Recommended) Moderate Closing Time", "1 Second - Slowest Closing Time"])
         self.servoSpeed.adjustSize()
 
-        self.step1 = QCheckBox("Step1", self.tab1)
+        self.step1 = QCheckBox("Check TC Readings", self.tab1)
         self.step1.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
         self.step1.adjustSize()
 
-        self.step2 = QCheckBox("Step2", self.tab1)
+        self.step2 = QCheckBox("Load cell static readings", self.tab1)
         self.step2.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
         self.step2.adjustSize()
 
