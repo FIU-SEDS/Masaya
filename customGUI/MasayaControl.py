@@ -78,19 +78,53 @@ class DiagramWindow(QMainWindow):
         self.servoSpeed.addItems(["Servo Speed","0.3 Seconds - Fastest", "0.6 Seconds - (Recommended) Moderate Closing Time", "1 Second - Slowest Closing Time"])
         self.servoSpeed.adjustSize()
 
-        self.step1 = QCheckBox("Check TC Readings", self.tab1)
-        self.step1.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
+        checklist_style = "color: white; font-size: 15px; font-weight: bold;"
+
+        self.step1 = QCheckBox("Check TC readings", self.tab1)
+        self.step1.setStyleSheet(checklist_style)
         self.step1.adjustSize()
 
-        self.step2 = QCheckBox("Load cell static readings", self.tab1)
-        self.step2.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
+        self.step2 = QCheckBox("Check LC static readings", self.tab1)
+        self.step2.setStyleSheet(checklist_style)
         self.step2.adjustSize()
 
+        self.step3 = QCheckBox("Check valve protocals", self.tab1)
+        self.step3.setStyleSheet(checklist_style)
+        self.step3.adjustSize()
+
+        self.step4 = QCheckBox("Check LC readings while filling", self.tab1)
+        self.step4.setStyleSheet(checklist_style)
+        self.step4.adjustSize()
+
+        self.step5 = QCheckBox("Conduct leak test", self.tab1)
+        self.step5.setStyleSheet(checklist_style)
+        self.step5.adjustSize()
+
+        self.step6 = QCheckBox("Check PT readings", self.tab1)
+        self.step6.setStyleSheet(checklist_style)
+        self.step6.adjustSize()
+
+        self.step7 = QCheckBox("Check Depressurization System", self.tab1)
+        self.step7.setStyleSheet(checklist_style)
+        self.step7.adjustSize()
+
+        self.step8 = QCheckBox("Conduct localized leak test", self.tab1)
+        self.step8.setStyleSheet(checklist_style)
+        self.step8.adjustSize()
+
         self.topLeft = QVBoxLayout()
+        self.topLeft.setSpacing(30)
         self.topLeft.addWidget(self.name)
         self.topLeft.addWidget(self.servoSpeed)
         self.topLeft.addWidget(self.step1)
         self.topLeft.addWidget(self.step2)
+        self.topLeft.addWidget(self.step3)
+        self.topLeft.addWidget(self.step4)
+        self.topLeft.addWidget(self.step5)
+        self.topLeft.addWidget(self.step6)
+        self.topLeft.addWidget(self.step7)
+        self.topLeft.addWidget(self.step8)
+
 
         self.topLeftContainer = QWidget(self.tab1) # Container that contains top left
         self.topLeftContainer.setLayout(self.topLeft)
@@ -196,7 +230,8 @@ class DiagramWindow(QMainWindow):
 
         # Main Page Schem Labels
 
-        label_style = "color: white; font-size: 20px; font-weight: bold;"
+        sensor_label_style = "color: white; font-size: 20px; font-weight: bold;"
+
 
         sensor_configs = [
             ("LC01F", 625, 487), ("LC02OX", 625, 420),
@@ -212,9 +247,9 @@ class DiagramWindow(QMainWindow):
         self.sensors = {}
 
         for name, x, y in sensor_configs:
-            lbl = QLabel("000000", label)
+            lbl = QLabel("-----", label)
             lbl.move(x, y)
-            lbl.setStyleSheet(label_style)
+            lbl.setStyleSheet(sensor_label_style)
             lbl.setFixedWidth(80)
             self.sensors[name] = lbl
 
