@@ -112,6 +112,10 @@ class DiagramWindow(QMainWindow):
         self.step8.setStyleSheet(checklist_style)
         self.step8.adjustSize()
 
+        self.step9 = QCheckBox("Blowdown", self.tab1)
+        self.step9.setStyleSheet(checklist_style)
+        self.step9.adjustSize()
+
         self.topLeft = QVBoxLayout()
         self.topLeft.setSpacing(30)
         self.topLeft.addWidget(self.name)
@@ -124,6 +128,7 @@ class DiagramWindow(QMainWindow):
         self.topLeft.addWidget(self.step6)
         self.topLeft.addWidget(self.step7)
         self.topLeft.addWidget(self.step8)
+        self.topLeft.addWidget(self.step9)
 
 
         self.topLeftContainer = QWidget(self.tab1) # Container that contains top left
