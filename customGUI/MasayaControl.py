@@ -142,14 +142,18 @@ class DiagramWindow(QMainWindow):
         self.statusTitle.setStyleSheet("color: white; font-size: 25px; font-weight: bold;")
         self.statusTitle.adjustSize()
 
-        self.status = QLabel('<span style="color: red; font-size: 20pt;">●</span> DAQ Not Found', self.tab1) #HTML TO Make Circle
+        status_style = "font-family: 'Consolas'; color: white; font-size: 20px; font-weight: bold;"
 
-        self.status.setStyleSheet("font-family: 'Consolas'; color: white; font-size: 20px; font-weight: bold;")
+        self.status = QLabel('<span style="color: red; font-size: 20pt;">●</span> DAQ Not Found', self.tab1) #HTML TO Make Circle
+        self.sensor_status = QLabel('<span style="color: red; font-size: 20pt;">●</span> Sensors NaN', self.tab1) #HTML TO Make Circle
+        self.status.setStyleSheet(status_style)
+        self.sensor_status.setStyleSheet(status_style)
         self.status.adjustSize()
 
         self.topRight = QVBoxLayout()
         self.topRight.addWidget(self.statusTitle)
         self.topRight.addWidget(self.status)
+        self.topRight.addWidget(self.sensor_status)
         
         self.topRightContainer = QWidget(self.tab1) # Container that contains top right
         self.topRightContainer.setLayout(self.topRight)
