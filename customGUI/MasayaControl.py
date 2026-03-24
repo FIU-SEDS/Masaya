@@ -228,24 +228,6 @@ class DiagramWindow(QMainWindow):
         self.udp_thread.start()
 
 
-        # Leak Test Tab
-
-        self.leakTest = QGridLayout(self.tab7)
-        self.testName = QLabel("Leak Test")
-        self.testName.setStyleSheet("font-family: 'Consolas'; font: arial; color: white; font-size: 35px; font-weight: bold;")
-        self.leakTest.addWidget(self.testName, 0,0)
-
-        self.e9 = QCheckBox("E.9")
-        self.e9.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
-
-        self.e10 = QCheckBox("E.10")
-        self.e10.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
-
-        self.leakTestBox = QVBoxLayout()
-        self.leakTestBox.addWidget(self.e9)
-        self.leakTestBox.addWidget(self.e10)
-
-        self.leakTest.addLayout(self.leakTestBox,1,0)
 
 
 
