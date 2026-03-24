@@ -57,10 +57,7 @@ class DiagramWindow(QMainWindow):
         self.tabs.addTab(self.tab5, "LC/Thrust")
 
         self.tab6 = QWidget()
-        self.tabs.addTab(self.tab6, "Import")
-
-        self.tab7 = QWidget()
-        self.tabs.addTab(self.tab7, "Leak Test")
+        self.tabs.addTab(self.tab6, "PT Sensors")
 
 
         label = QLabel(self.tab1)
@@ -154,6 +151,7 @@ class DiagramWindow(QMainWindow):
         """)
         self.STOP.clicked.connect(self.STOP_Test)
 
+
         # Main Page Schem Labels
 
         label_style = "color: white; font-size: 20px; font-weight: bold;"
@@ -184,26 +182,30 @@ class DiagramWindow(QMainWindow):
         self.n2oCharts = QGridLayout(self.tab3)
         self.ipaCharts = QGridLayout(self.tab4)
         self.otherCharts = QGridLayout(self.tab5)
+        self.ptSensors = QGridLayout(self.tab6)
 
         # Easy creation of all charts, contains chart's name/position/x&y grid cords
 
         sensor_configs_graphs = [
             ("LC01F", self.otherCharts, 0,0), ("LC02OX", self.otherCharts, 0,1),
             ("TC01F", self.n2Charts, 1,0), ("TC02OX", self.n2Charts, 0, 0), ("TC03OX", self.n2oCharts, 1, 0), ("TC02F", self.ipaCharts, 1, 0),
-            ("PT01F", self.n2Charts, 1, 1), ("PT02F", self.ipaCharts, 0, 0), ("PT03F", self.ipaCharts, 0, 1), ("PT04F", self.ipaCharts, 1, 1), 
+            ("PT01F", self.n2Charts, 1, 1), ("PT02F", self.ipaCharts, 0, 0), ("PT04F", self.ipaCharts, 1, 1), 
             ("PT05E", self.otherCharts, 0,2), ("PT06OX", self.n2oCharts, 1, 1), ("PT07OX", self.n2oCharts, 0, 1), ("PT08OX",self.n2oCharts, 0, 0),
             ("PT09OX", self.n2Charts, 0, 1)
 
         ]
 
         self.sensorsGraphs = {}
+        self.ptSensorsGraphs = {}
+
+        pt_row = 0
+        pt_col = 0
+        max_cols = 4 
 
         for name, tab, x, y in sensor_configs_graphs:
             gph = pg.PlotWidget()
             gph.setBackground('k')
             gph.setTitle(name, color="w", size="20pt", bold=True)
-
-            #Depending on Sensor type, label changes
 
             if name[:2] == "TC":
                 gph.setLabel('left', 'Temperature (°C)', color='red', size='12pt')
@@ -211,14 +213,27 @@ class DiagramWindow(QMainWindow):
             elif name[:2] == "PT":
                 gph.setLabel('left', 'Pressure (PSI)', color='red', size='12pt')
                 gph.setLabel('bottom', 'Hour', color='red', size='12pt')
+                
+                gph_duplicate = pg.PlotWidget()
+                gph_duplicate.setBackground('k')
+                gph_duplicate.setTitle(name, color="w", size="20pt", bold=True)
+                gph_duplicate.setLabel('left', 'Pressure (PSI)', color='red', size='12pt')
+                gph_duplicate.setLabel('bottom', 'Hour', color='red', size='12pt')
+                
+                self.ptSensors.addWidget(gph_duplicate, pt_row, pt_col)
+                self.ptSensorsGraphs[name] = gph_duplicate
+                
+                pt_col += 1
+                if pt_col >= max_cols:
+                    pt_col = 0
+                    pt_row += 1
+
             elif name[:2] == "LC":
-                gph.setLabel('left', 'Grams (PSI)', color='red', size='12pt')
+                gph.setLabel('left', 'Kilograms (Kg)', color='red', size='12pt') 
                 gph.setLabel('bottom', 'Hour', color='red', size='12pt')
             
-            tab.addWidget(gph,x,y)
-
+            tab.addWidget(gph, x, y)
             self.sensorsGraphs[name] = gph
-        
 
         # pen = pg.mkPen(color=(255, 0, 0), width=3) 
 
@@ -237,6 +252,16 @@ class DiagramWindow(QMainWindow):
     def update_SENSORS(self, value):
         self.sensors["LC01F"].setText(value)
         self.sensors["LC01F"].adjustSize()
+        
+        # sensor_name = "PT01F" 
+
+        # if sensor_name in self.sensorsGraphs:
+        #     self.sensorsGraphs[sensor_name].plot(new_x_data, new_y_data, clear=True)
+
+        # # Need to update PT sensors too
+        # if sensor_name in self.ptSensorsGraphs:
+        #     self.ptSensorsGraphs[sensor_name].plot(new_x_data, new_y_data, clear=True)
+            
 
     def GO(self):
         if(self.step1.isChecked() and not self.step2.isChecked()):
