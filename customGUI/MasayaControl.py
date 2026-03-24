@@ -31,8 +31,8 @@ class DiagramWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Masaya Control")
-        self.resize(1333, 800)
-        self.setFixedSize(1333, 800)
+        self.resize(1600, 900)
+        self.setFixedSize(1600, 900)
 
         self.tabs = QTabWidget()
         self.tabs.setTabPosition(QTabWidget.TabPosition.West)
@@ -65,10 +65,11 @@ class DiagramWindow(QMainWindow):
 
         label = QLabel(self.tab1)
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        label.setPixmap(QPixmap(os.path.join(script_dir, "assets", "PID_Masaya.png")))
+        label.setPixmap(QPixmap(os.path.join(script_dir, "assets", "final_PID.png")))
         label.setScaledContents(True)
-        label.setMinimumSize(1333, 800)
-        label.setMaximumSize(1333, 800)
+        label.setMinimumSize(1580, 900)
+        label.setMaximumSize(1580, 900)
+        label.adjustSize()
 
         # Main Page top left (Title/Servo Speed/Steps)
         
@@ -116,13 +117,13 @@ class DiagramWindow(QMainWindow):
         
         self.topRightContainer = QWidget(self.tab1) # Container that contains top right
         self.topRightContainer.setLayout(self.topRight)
-        self.topRightContainer.move(1050, 10)
+        self.topRightContainer.move(1250, 10)
         self.topRightContainer.adjustSize()
 
         # Go and Stop Button Created
 
         self.START = QPushButton("GO", self.tab1)
-        self.START.move(18, 658)
+        self.START.move(18, 758)
         self.START.resize(267, 44)
         self.START.setStyleSheet("""
             QPushButton {
@@ -138,7 +139,7 @@ class DiagramWindow(QMainWindow):
         self.START.clicked.connect(self.GO)
 
         self.STOP = QPushButton("STOP", self.tab1)
-        self.STOP.move(18, 711)
+        self.STOP.move(18, 811)
         self.STOP.resize(267, 71)
         self.STOP.setStyleSheet("""
             QPushButton {
@@ -155,21 +156,23 @@ class DiagramWindow(QMainWindow):
 
         # Main Page Schem Labels
 
-        label_style = "color: white; font-size: 18px; font-weight: bold;"
+        label_style = "color: white; font-size: 20px; font-weight: bold;"
 
         sensor_configs = [
-            ("LC01F", 590, 418), ("LC02OX", 590, 364),
-            ("TC01F", 204, 496), ("TC02OX", 204, 288), ("TC03OX", 830, 251), ("TC02F", 827, 530),
-            ("PT01F", 396, 496), ("PT02F", 586, 630), ("PT03F", 787, 630), ("PT04F",1052, 530), 
-            ("PT05E",1208, 452), ("PT06OX", 1052, 251), ("PT07OX", 787, 140), ("PT08OX",584, 140),
-            ("PT09OX",396, 288)
+            ("LC01F", 625, 487), ("LC02OX", 625, 420),
+            ("TC01F", 970, 820), ("TC02OX", 970, 60), ("TC03OX", 962, 290), ("TC02F", 960, 607),
+            ("PT01F", 450, 607), ("PT02F", 630, 752), ("PT04F",1240, 607), 
+            ("PT05E",1440, 530), ("PT06OX", 1240, 290), ("PT07OX", 890, 147), ("PT08OX", 630, 147),
+            ("PT09OX", 450, 290),
+            ("WW_n2o", 780, 268), ("WW_ipa", 780, 579),
+            ("MFR_ipa", 773, 332), ("MFR_ipa", 773, 650)
 
         ]
 
         self.sensors = {}
 
         for name, x, y in sensor_configs:
-            lbl = QLabel("-----", label)
+            lbl = QLabel("000000", label)
             lbl.move(x, y)
             lbl.setStyleSheet(label_style)
             lbl.setFixedWidth(80)
