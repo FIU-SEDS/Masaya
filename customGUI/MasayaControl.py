@@ -1,5 +1,5 @@
 import sys, os, socket
-from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout
+from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 import pyqtgraph as pg
@@ -151,6 +151,48 @@ class DiagramWindow(QMainWindow):
         """)
         self.STOP.clicked.connect(self.STOP_Test)
 
+        # Servo/Solenoid Button Creation
+
+        valve_button_off = ("""
+            QPushButton {
+                color: white; 
+                font-size: 18px; 
+                font-weight: bold; 
+                background-color: red;
+            }
+            QPushButton:pressed {
+                background-color: darkred;
+            }
+        """)
+
+        valve_button_on = ("""
+            QPushButton {
+                color: white; 
+                font-size: 18px; 
+                font-weight: bold; 
+                background-color: green;
+            }
+            QPushButton:pressed {
+                background-color: darkgreen;
+            }
+            """)
+
+        valve_configs = [
+            ("SEV01F", 610, 650), ("SEV02F", 1085, 650), 
+            ("SEV03OX", 1085, 335),("SEV04OX", 610, 335),
+            ("SOV01F", 850, 853),("SOV02OX", 850, 96),
+
+        ]
+
+        self.valves = {}
+
+        for name, x, y in valve_configs:
+            but = QPushButton("Closed", label)
+            but.move(x, y)
+            but.setStyleSheet(valve_button_off)
+            but.resize(100, 25)
+            self.valves[name] = but
+            but.clicked.connect(lambda checked=False, v_name=name: self.valveOC(v_name))
 
         # Main Page Schem Labels
 
@@ -282,6 +324,58 @@ class DiagramWindow(QMainWindow):
 
     def STOP_Test(self):
         self.sensors["PT01F"].setText("STOP")
+
+    def valveOC(self, valve_name):
+        valve_button_off = ("""
+            QPushButton {
+                color: white; 
+                font-size: 18px; 
+                font-weight: bold; 
+                background-color: red;
+            }
+            QPushButton:pressed {
+                background-color: darkred;
+            }
+        """)
+
+        valve_button_on = ("""
+            QPushButton {
+                color: white; 
+                font-size: 18px; 
+                font-weight: bold; 
+                background-color: green;
+            }
+            QPushButton:pressed {
+                background-color: darkgreen;
+            }
+            """)
+            
+        button = self.valves[valve_name]
+        
+        if button.text() == "Closed":
+            openValve = QMessageBox.question(
+                self, # Parent window
+                "Confirm Action", # Dialog title
+                "Are you sure you want to open this valve?", # Dialog message
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No # Buttons to show
+                ) 
+            if openValve == QMessageBox.StandardButton.Yes:          
+                button.setText("Open")
+                button.setStyleSheet(valve_button_on)
+
+        elif button.text() == "Open":
+            closeValve = QMessageBox.question(
+                self, # Parent window
+                "Confirm Action", # Dialog title
+                "Are you sure you want to close this valve?", # Dialog message
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No # Buttons to show
+                )
+            if closeValve == QMessageBox.StandardButton.Yes:
+                button.setText("Closed")
+                button.setStyleSheet(valve_button_off)
+
+        
+           
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
