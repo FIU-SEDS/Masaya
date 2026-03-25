@@ -78,57 +78,27 @@ class DiagramWindow(QMainWindow):
         self.servoSpeed.addItems(["Servo Speed","0.3 Seconds - Fastest", "0.6 Seconds - (Recommended) Moderate Closing Time", "1 Second - Slowest Closing Time"])
         self.servoSpeed.adjustSize()
 
-        checklist_style = "color: white; font-size: 15px; font-weight: bold;"
-
-        self.step1 = QCheckBox("Check TC readings", self.tab1)
-        self.step1.setStyleSheet(checklist_style)
-        self.step1.adjustSize()
-
-        self.step2 = QCheckBox("Check LC static readings", self.tab1)
-        self.step2.setStyleSheet(checklist_style)
-        self.step2.adjustSize()
-
-        self.step3 = QCheckBox("Check valve protocals", self.tab1)
-        self.step3.setStyleSheet(checklist_style)
-        self.step3.adjustSize()
-
-        self.step4 = QCheckBox("Check LC readings while filling", self.tab1)
-        self.step4.setStyleSheet(checklist_style)
-        self.step4.adjustSize()
-
-        self.step5 = QCheckBox("Conduct leak test", self.tab1)
-        self.step5.setStyleSheet(checklist_style)
-        self.step5.adjustSize()
-
-        self.step6 = QCheckBox("Check PT readings", self.tab1)
-        self.step6.setStyleSheet(checklist_style)
-        self.step6.adjustSize()
-
-        self.step7 = QCheckBox("Check Depressurization System", self.tab1)
-        self.step7.setStyleSheet(checklist_style)
-        self.step7.adjustSize()
-
-        self.step8 = QCheckBox("Conduct localized leak test", self.tab1)
-        self.step8.setStyleSheet(checklist_style)
-        self.step8.adjustSize()
-
-        self.step9 = QCheckBox("Blowdown", self.tab1)
-        self.step9.setStyleSheet(checklist_style)
-        self.step9.adjustSize()
-
         self.topLeft = QVBoxLayout()
         self.topLeft.setSpacing(30)
         self.topLeft.addWidget(self.name)
         self.topLeft.addWidget(self.servoSpeed)
-        self.topLeft.addWidget(self.step1)
-        self.topLeft.addWidget(self.step2)
-        self.topLeft.addWidget(self.step3)
-        self.topLeft.addWidget(self.step4)
-        self.topLeft.addWidget(self.step5)
-        self.topLeft.addWidget(self.step6)
-        self.topLeft.addWidget(self.step7)
-        self.topLeft.addWidget(self.step8)
-        self.topLeft.addWidget(self.step9)
+
+        checklist_style = "color: white; font-size: 15px; font-weight: bold;"
+
+        checklist_steps = [
+            ("Check TC Readings"), ("Check LC static readings"), ("Check valve protocals"),
+            ("Check LC readings while filling"),("Conduct leak test"), ("Check PT readings"),
+            ("Check Depressurization System"),("Conduct localized leak test"), ("Blowdown")
+
+        ]
+
+        self.checklist = {}
+
+        for name in checklist_steps:
+            chk = QCheckBox(name)
+            chk.setStyleSheet(checklist_style)
+            self.topLeft.addWidget(chk)
+            self.checklist[name] = chk
 
 
         self.topLeftContainer = QWidget(self.tab1) # Container that contains top left
@@ -350,12 +320,12 @@ class DiagramWindow(QMainWindow):
             
 
     def GO(self):
-        if(self.step1.isChecked() and not self.step2.isChecked()):
+        if(self.checklist["Check TC Readings"].isChecked() and not self.checklist["Check LC static readings"].isChecked()):
             self.popUp = QMessageBox(self)
             self.popUp.setWindowTitle("Warning")
-            self.popUp.setText("First Step Complete, opening Valves: \n- PT-09-OX\n- PT-01-F\n Second Step isn't complete\nDo the Following: \nMake sure Manual Valves are open\n")
+            self.popUp.setText("Check TC Readings Test Complete, opening Valves: \n- PT-09-OX\n- PT-01-F\n Check LC static readings isn't complete\nDo the Following: \nMake sure Manual Valves are open\n")
             self.popUp.exec()
-        elif(self.step1.isChecked() and self.step2.isChecked()):
+        elif(self.checklist["Check TC Readings"].isChecked() and self.checklist["Check LC static readings"].isChecked()):
             self.popUp = QMessageBox(self)
             self.popUp.setWindowTitle("Warning")
             self.popUp.setText("Third isn't complete\nDo the Following: \nMake sure Manual Valves are open\n")
