@@ -168,25 +168,25 @@ class DiagramWindow(QMainWindow):
 
         valve_button_off = ("""
             QPushButton {
-                color: white; 
+                color: black; 
                 font-size: 18px; 
                 font-weight: bold; 
-                background-color: red;
+                background-color: gray;
             }
             QPushButton:pressed {
-                background-color: darkred;
+                background-color: white;
             }
         """)
 
         valve_button_on = ("""
             QPushButton {
-                color: white; 
+                color: black; 
                 font-size: 18px; 
                 font-weight: bold; 
-                background-color: green;
+                background-color: white;
             }
             QPushButton:pressed {
-                background-color: darkgreen;
+                background-color: gray;
             }
             """)
 
@@ -342,25 +342,25 @@ class DiagramWindow(QMainWindow):
     def valveOC(self, valve_name):
         valve_button_off = ("""
             QPushButton {
-                color: white; 
+                color: black; 
                 font-size: 18px; 
                 font-weight: bold; 
-                background-color: red;
+                background-color: gray;
             }
             QPushButton:pressed {
-                background-color: darkred;
+                background-color: white;
             }
         """)
 
         valve_button_on = ("""
             QPushButton {
-                color: white; 
+                color: black; 
                 font-size: 18px; 
                 font-weight: bold; 
-                background-color: green;
+                background-color: white;
             }
             QPushButton:pressed {
-                background-color: darkgreen;
+                background-color: gray;
             }
             """)
             
