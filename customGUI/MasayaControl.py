@@ -2,6 +2,7 @@ import sys, os, socket, MasayaBack
 from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from MasayaBack import DAQComms, CMD_OPEN_FAST, CMD_OPEN_MOD, CMD_OPEN_SLOW, CMD_CLOSE
 import pyqtgraph as pg
 
 
@@ -49,17 +50,17 @@ class DiagramWindow(QMainWindow):
 
         # Main Page top left (Title/Servo Speed/Steps)
         
-        self.name = QLabel("Cold Flow Test", label)
-        self.name.setStyleSheet("font-family: 'Consolas'; font: arial; color: white; font-size: 35px; font-weight: bold;")
+        self.dash_title = QLabel("Cold Flow Test", label)
+        self.dash_title.setStyleSheet("font-family: 'Consolas'; font: arial; color: white; font-size: 35px; font-weight: bold;")
 
 
         self.servoSpeed = QComboBox()
-        self.servoSpeed.addItems(["Servo Speed","0.3 Seconds - Fastest", "0.6 Seconds - (Recommended) Moderate Closing Time", "1 Second - Slowest Closing Time"])
+        self.servoSpeed.addItems(["Servo Speed","0.3 Seconds - Fastest", "0.6 Seconds - (Recommended) Moderate Opening Time", "1 Second - Slowest Opening Time"])
         self.servoSpeed.adjustSize()
 
         self.topLeft = QVBoxLayout()
         self.topLeft.setSpacing(30)
-        self.topLeft.addWidget(self.name)
+        self.topLeft.addWidget(self.dash_title)
         self.topLeft.addWidget(self.servoSpeed)
 
         checklist_style = "color: white; font-size: 15px; font-weight: bold;"
@@ -303,7 +304,7 @@ class DiagramWindow(QMainWindow):
         self.sensors["PT06OX"].setText(f"{data['PT4']:.1f}")
         self.sensors["PT07OX"].setText(f"{data['PT5']:.1f}")
         self.sensors["PT08OX"].setText(f"{data['PT6']:.1f}")
-        self.sensors["PT08OX"].setText(f"{data['PT7']:.1f}")
+        self.sensors["PT09OX"].setText(f"{data['PT7']:.1f}")
 
         self.sensors["LC01F"].setText(f"{data['LC0']:.1f}")
         self.sensors["LC02OX"].setText(f"{data['LC1']:.1f}")
@@ -372,6 +373,18 @@ class DiagramWindow(QMainWindow):
             """)
             
         button = self.valves[valve_name]
+
+        VALVE_ID_MAP = {
+            "SEV01F":  MasayaBack.SEV01F,
+            "SEV02F":  MasayaBack.SEV02F,
+            "SEV03OX": MasayaBack.SEV03OX,
+            "SEV04OX": MasayaBack.SEV04OX,
+            "SOV01F":  MasayaBack.SOV01F,
+            "SOV02OX": MasayaBack.SOV02OX,
+        }
+
+
+        selected_speed = self.servoSpeed.currentText()
         
         if button.text() == "Closed":
             openValve = QMessageBox.question(
@@ -380,10 +393,18 @@ class DiagramWindow(QMainWindow):
                 "Are you sure you want to open this valve?", # Dialog message
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No # Buttons to show
                 ) 
-            if openValve == QMessageBox.StandardButton.Yes:          
+            if openValve == QMessageBox.StandardButton.Yes and selected_speed == "0.3 Seconds - Fastest":          
                 button.setText("Open")
                 button.setStyleSheet(valve_button_on)
-                self.comms.send_command(SERVO_0, CMD_OPEN_FAST)
+                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN_FAST)
+            elif openValve == QMessageBox.StandardButton.Yes and selected_speed == "0.6 Seconds - (Recommended) Moderate Opening Time":          
+                button.setText("Open")
+                button.setStyleSheet(valve_button_on)
+                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN_MOD)
+            elif openValve == QMessageBox.StandardButton.Yes and selected_speed == "1 Second - Slowest Opening Time":          
+                button.setText("Open")
+                button.setStyleSheet(valve_button_on)
+                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN_SLOW)
 
         elif button.text() == "Open":
             closeValve = QMessageBox.question(
@@ -395,8 +416,13 @@ class DiagramWindow(QMainWindow):
             if closeValve == QMessageBox.StandardButton.Yes:
                 button.setText("Closed")
                 button.setStyleSheet(valve_button_off)
+                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE)
 
-        
+
+    def closeEvent(self, event):
+        self.comms.stop()
+        self.comms.wait()
+        event.accept()
            
 
 if __name__ == "__main__":
