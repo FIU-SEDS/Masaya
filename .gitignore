@@ -5,3 +5,5 @@
 .vscode/ipch
 .vscode
 .venv
+customGUI/logs
+customGUI/__pycache__
