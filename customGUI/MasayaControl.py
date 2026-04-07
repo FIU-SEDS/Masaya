@@ -1,31 +1,9 @@
-import sys, os, socket
+import sys, os, socket, MasayaBack
 from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 import pyqtgraph as pg
 
-class UDPListener(QThread):
-    data_received = pyqtSignal(str)
-
-    def __init__(self, ip="192.168.1.100", port=5005):
-        super().__init__()
-        self.ip = ip
-        self.port = port
-
-    def run(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        
-        try:
-            sock.bind((self.ip, self.port))
-            print(f"Listening on {self.ip}:{self.port}")
-        except OSError as e:
-            print(f"Error: Could not bind to {self.ip}:{self.port}. {e}")
-            return 
-
-        while True:
-            data, addr = sock.recvfrom(1024)
-            text = data.decode("utf-8", errors="ignore").strip()
-            self.data_received.emit(text)
 
 class DiagramWindow(QMainWindow):
     def __init__(self):
@@ -38,6 +16,7 @@ class DiagramWindow(QMainWindow):
         self.tabs.setTabPosition(QTabWidget.TabPosition.West)
         self.tabs.setMovable(True)
         self.setCentralWidget(self.tabs)
+
 
         # All Tabs
 
@@ -201,22 +180,22 @@ class DiagramWindow(QMainWindow):
                 color: white; 
                 font-size: 18px; 
                 font-weight: bold; 
-                background-color: red;
+                background-color: gray;
             }
             QPushButton:pressed {
-                background-color: darkred;
+                background-color: gray;
             }
         """)
 
         valve_button_on = ("""
             QPushButton {
-                color: white; 
+                color: black; 
                 font-size: 18px; 
                 font-weight: bold; 
-                background-color: green;
+                background-color: white;
             }
             QPushButton:pressed {
-                background-color: darkgreen;
+                background-color: white;
             }
             """)
 
@@ -323,21 +302,49 @@ class DiagramWindow(QMainWindow):
 
         # pen = pg.mkPen(color=(255, 0, 0), width=3) 
 
+        # Comms
 
-        # Tab 3 Section
+        self.comms = DAQComms(
+            stm32_ip="192.168.1.200",
+            stm32_port=2000,
+            listen_port=5005,
+            csv_dir="logs"
+        )
+
+        self.comms.telemetry_received.connect(self.update_SENSORS)
+
+        self.comms.connection_lost.connect(
+            lambda: self.status.setText('<span style="color: red;">●</span> DAQ Not Found')
+        )
+        self.comms.connection_restored.connect(
+            lambda: self.status.setText('<span style="color: green;">●</span> DAQ Connected')
+        )
+
+        self.comms.start()
 
 
-        self.udp_thread = UDPListener(ip="192.168.1.100", port=5005)
-        self.udp_thread.data_received.connect(self.update_SENSORS)
-        self.udp_thread.start()
 
 
+    def update_SENSORS(self, data: dict):
+        self.sensors["PT01F"].setText(f"{data['PT0']:.1f}")
+        self.sensors["PT02F"].setText(f"{data['PT1']:.1f}")
+        self.sensors["PT04F"].setText(f"{data['PT2']:.1f}")
+        self.sensors["PT05E"].setText(f"{data['PT3']:.1f}")
+        self.sensors["PT06OX"].setText(f"{data['PT4']:.1f}")
+        self.sensors["PT07OX"].setText(f"{data['PT5']:.1f}")
+        self.sensors["PT08OX"].setText(f"{data['PT6']:.1f}")
+        self.sensors["PT08OX"].setText(f"{data['PT7']:.1f}")
+
+        self.sensors["LC01F"].setText(f"{data['LC0']:.1f}")
+        self.sensors["LC02OX"].setText(f"{data['LC1']:.1f}")
+
+        # self.sensors["TC01F"].setText(f"{data['TC0']:.1f}") NOT BEING USED ANYMORE
+        self.sensors["TC02OX"].setText(f"{data['TC0']:.1f}")
+        self.sensors["TC03OX"].setText(f"{data['TC1']:.1f}")
+        self.sensors["TC02F"].setText(f"{data['TC2']:.1f}")
 
 
-
-    def update_SENSORS(self, value):
-        self.sensors["LC01F"].setText(value)
-        self.sensors["LC01F"].adjustSize()
+        
         
         # sensor_name = "PT01F" 
 
@@ -375,22 +382,22 @@ class DiagramWindow(QMainWindow):
                 color: white; 
                 font-size: 18px; 
                 font-weight: bold; 
-                background-color: red;
+                background-color: gray;
             }
             QPushButton:pressed {
-                background-color: darkred;
+                background-color: gray;
             }
         """)
 
         valve_button_on = ("""
             QPushButton {
-                color: white; 
+                color: black; 
                 font-size: 18px; 
                 font-weight: bold; 
-                background-color: green;
+                background-color: white;
             }
             QPushButton:pressed {
-                background-color: darkgreen;
+                background-color: white;
             }
             """)
             
@@ -406,6 +413,7 @@ class DiagramWindow(QMainWindow):
             if openValve == QMessageBox.StandardButton.Yes:          
                 button.setText("Open")
                 button.setStyleSheet(valve_button_on)
+                self.comms.send_command(SERVO_0, CMD_OPEN_FAST)
 
         elif button.text() == "Open":
             closeValve = QMessageBox.question(
