@@ -2,7 +2,7 @@ import sys, os, socket, time, MasayaBack
 from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from MasayaBack import DAQComms, CMD_OPEN_FAST, CMD_OPEN_MOD, CMD_OPEN_SLOW, CMD_CLOSE
+from MasayaBack import DAQComms, CMD_OPEN, CMD_CLOSE_MOD, CMD_CLOSE_SLOW, CMD_CLOSE
 from collections import deque
 import pyqtgraph as pg
 
@@ -56,7 +56,7 @@ class DiagramWindow(QMainWindow):
 
 
         self.servoSpeed = QComboBox()
-        self.servoSpeed.addItems(["Servo Speed","0.3 Seconds - Fastest", "0.6 Seconds - (Recommended) Moderate Opening Time", "1 Second - Slowest Opening Time"])
+        self.servoSpeed.addItems(["Servo Closing Speed","0.3 Seconds - Fastest", "0.6 Seconds - (Recommended) Moderate", "1 Second - Slowest"])
         self.servoSpeed.adjustSize()
 
         self.topLeft = QVBoxLayout()
@@ -175,7 +175,7 @@ class DiagramWindow(QMainWindow):
             ("SEV01F", 610, 650), ("SEV02F", 1085, 650), 
             ("SEV03OX", 1085, 335),("SEV04OX", 610, 335),
             ("SOV01F", 850, 853),("SOV02OX", 850, 96),
-
+            ("BLOWOFF",1285, 450)
         ]
 
         self.valves = {}
@@ -385,49 +385,49 @@ class DiagramWindow(QMainWindow):
 
         selected_speed = self.servoSpeed.currentText()
         
-        if button.text() == "Closed":
-            openValve = QMessageBox.question(
-                self, # Parent window
-                "Confirm Action", # Dialog title
-                "Are you sure you want to open this valve?", # Dialog message
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No # Buttons to show
-                ) 
-            if openValve == QMessageBox.StandardButton.Yes:
-                is_solenoid = valve_name in ("SOV01F", "SOV02OX")
-                
-                if not is_solenoid and selected_speed == "Servo Speed":
-                    QMessageBox.warning(self, "No Speed Selected", "Please select a servo opening speed before opening.")
-                    return
-            if openValve == QMessageBox.StandardButton.Yes and (valve_name == "SOV01F" or valve_name == "SOV02OX"):          
-                button.setText("Open")
-                button.setStyleSheet(valve_button_on)
-                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN_FAST)
-            elif openValve == QMessageBox.StandardButton.Yes and selected_speed == "0.3 Seconds - Fastest":          
-                button.setText("Open")
-                button.setStyleSheet(valve_button_on)
-                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN_FAST)
-            elif openValve == QMessageBox.StandardButton.Yes and selected_speed == "0.6 Seconds - (Recommended) Moderate Opening Time":          
-                button.setText("Open")
-                button.setStyleSheet(valve_button_on)
-                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN_MOD)
-            elif openValve == QMessageBox.StandardButton.Yes and selected_speed == "1 Second - Slowest Opening Time":          
-                button.setText("Open")
-                button.setStyleSheet(valve_button_on)
-                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN_SLOW)
-            
-            
-
-        elif button.text() == "Open":
+        if button.text() == "Opened":
             closeValve = QMessageBox.question(
                 self, # Parent window
                 "Confirm Action", # Dialog title
                 "Are you sure you want to close this valve?", # Dialog message
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No # Buttons to show
-                )
+                ) 
             if closeValve == QMessageBox.StandardButton.Yes:
+                is_solenoid = valve_name in ("SOV01F", "SOV02OX")
+                
+                if not is_solenoid and selected_speed == "Servo Closing Speed":
+                    QMessageBox.warning(self, "No Speed Selected", "Please select a servo closing speed.")
+                    return
+            if closeValve == QMessageBox.StandardButton.Yes and (valve_name == "SOV01F" or valve_name == "SOV02OX"):          
                 button.setText("Closed")
                 button.setStyleSheet(valve_button_off)
                 self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE)
+            elif closeValve == QMessageBox.StandardButton.Yes and selected_speed == "0.3 Seconds - Fastest":          
+                button.setText("Closed")
+                button.setStyleSheet(valve_button_off)
+                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE)
+            elif closeValve == QMessageBox.StandardButton.Yes and selected_speed == "0.6 Seconds - (Recommended) Moderate":          
+                button.setText("Closed")
+                button.setStyleSheet(valve_button_off)
+                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE_MOD)
+            elif closeValve == QMessageBox.StandardButton.Yes and selected_speed == "1 Second - Slowest":          
+                button.setText("Closed")
+                button.setStyleSheet(valve_button_off)
+                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE_SLOW)
+            
+            
+
+        elif button.text() == "Closed":
+            openValve = QMessageBox.question(
+                self, # Parent window
+                "Confirm Action", # Dialog title
+                "Are you sure you want to open this valve?", # Dialog message
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No # Buttons to show
+                )
+            if openValve == QMessageBox.StandardButton.Yes:
+                button.setText("Opened")
+                button.setStyleSheet(valve_button_on)
+                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN)
 
 
     def closeEvent(self, event):

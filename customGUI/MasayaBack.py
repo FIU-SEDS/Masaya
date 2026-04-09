@@ -23,9 +23,9 @@ SOV01F = 4
 SOV02OX = 5
 
 # Commands
-CMD_OPEN_FAST = 0x01
-CMD_OPEN_MOD  = 0x02
-CMD_OPEN_SLOW = 0x03
+CMD_OPEN = 0x01
+CMD_CLOSE_MOD  = 0x02
+CMD_CLOSE_SLOW = 0x03
 CMD_CLOSE     = 0x04
 
 # Sensor names in order they appear in the telemetry frame
@@ -146,7 +146,7 @@ class DAQComms(QThread):
         Safe to call from any thread.
 
         Example:
-            comms.send_command(SERVO_0, CMD_OPEN_FAST)
+            comms.send_command(SERVO_0, CMD_OPEN)
             comms.send_command(SOLENOID_1, CMD_CLOSE)
         """
         if self._sock is None:
