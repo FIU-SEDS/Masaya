@@ -1,8 +1,9 @@
-import sys, os, socket, MasayaBack
+import sys, os, socket, time, MasayaBack
 from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from MasayaBack import DAQComms, CMD_OPEN_FAST, CMD_OPEN_MOD, CMD_OPEN_SLOW, CMD_CLOSE
+from collections import deque
 import pyqtgraph as pg
 
 
@@ -242,6 +243,7 @@ class DiagramWindow(QMainWindow):
             gph = pg.PlotWidget()
             gph.setBackground('k')
             gph.setTitle(name, color="w", size="20pt", bold=True)
+            gph.max_points = 500
 
             if name[:2] == "TC":
                 gph.setLabel('left', 'Temperature (°C)', color='red', size='12pt')
@@ -314,9 +316,6 @@ class DiagramWindow(QMainWindow):
         self.sensors["TC03OX"].setText(f"{data['TC1']:.1f}")
         self.sensors["TC02F"].setText(f"{data['TC2']:.1f}")
 
-
-        
-        
         # sensor_name = "PT01F" 
 
         # if sensor_name in self.sensorsGraphs:
@@ -393,7 +392,17 @@ class DiagramWindow(QMainWindow):
                 "Are you sure you want to open this valve?", # Dialog message
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No # Buttons to show
                 ) 
-            if openValve == QMessageBox.StandardButton.Yes and selected_speed == "0.3 Seconds - Fastest":          
+            if openValve == QMessageBox.StandardButton.Yes:
+                is_solenoid = valve_name in ("SOV01F", "SOV02OX")
+                
+                if not is_solenoid and selected_speed == "Servo Speed":
+                    QMessageBox.warning(self, "No Speed Selected", "Please select a servo opening speed before opening.")
+                    return
+            if openValve == QMessageBox.StandardButton.Yes and (valve_name == "SOV01F" or valve_name == "SOV02OX"):          
+                button.setText("Open")
+                button.setStyleSheet(valve_button_on)
+                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN_FAST)
+            elif openValve == QMessageBox.StandardButton.Yes and selected_speed == "0.3 Seconds - Fastest":          
                 button.setText("Open")
                 button.setStyleSheet(valve_button_on)
                 self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN_FAST)
@@ -405,6 +414,8 @@ class DiagramWindow(QMainWindow):
                 button.setText("Open")
                 button.setStyleSheet(valve_button_on)
                 self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN_SLOW)
+            
+            
 
         elif button.text() == "Open":
             closeValve = QMessageBox.question(
