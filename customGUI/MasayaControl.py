@@ -296,25 +296,30 @@ class DiagramWindow(QMainWindow):
         self.comms.start()
 
 
-
-
     def update_SENSORS(self, data: dict):
-        self.sensors["PT01F"].setText(f"{data['PT0']:.1f}")
-        self.sensors["PT02F"].setText(f"{data['PT1']:.1f}")
-        self.sensors["PT04F"].setText(f"{data['PT2']:.1f}")
-        self.sensors["PT05E"].setText(f"{data['PT3']:.1f}")
-        self.sensors["PT06OX"].setText(f"{data['PT4']:.1f}")
-        self.sensors["PT07OX"].setText(f"{data['PT5']:.1f}")
-        self.sensors["PT08OX"].setText(f"{data['PT6']:.1f}")
-        self.sensors["PT09OX"].setText(f"{data['PT7']:.1f}")
+        # 1. Map the UI sensor keys to their corresponding data keys
+        sensor_map = {
+            # Pressure Transducers
+            "PT01F": "PT0", "PT02F": "PT1", "PT04F": "PT2", "PT05E": "PT3",
+            "PT06OX": "PT4", "PT07OX": "PT5", "PT08OX": "PT6", "PT09OX": "PT7",
+            # Load Cells
+            "LC01F": "LC0", "LC02OX": "LC1",
+            # Thermocouples
+            "TC02OX": "TC0", "TC03OX": "TC1", "TC02F": "TC2"
+        }
 
-        self.sensors["LC01F"].setText(f"{data['LC0']:.1f}")
-        self.sensors["LC02OX"].setText(f"{data['LC1']:.1f}")
+        # 2. Update Sensor Text Labels
+        for ui_key, data_key in sensor_map.items():
+            if data_key in data:
+                val = data[data_key]
+                self.sensors[ui_key].setText(f"{val:.1f}")
 
-        # self.sensors["TC01F"].setText(f"{data['TC0']:.1f}") NOT BEING USED ANYMORE
-        self.sensors["TC02OX"].setText(f"{data['TC0']:.1f}")
-        self.sensors["TC03OX"].setText(f"{data['TC1']:.1f}")
-        self.sensors["TC02F"].setText(f"{data['TC2']:.1f}")
+        # 3. Update Valve Styles
+        valves = ['SEV01F', 'SEV02F', 'SEV03OX', 'SEV04OX', 'SOV01F', 'SOV02OX']
+        for valve in valves:
+            status = "Opened" if data.get(valve) == 90 else "Closed"
+            self.changeValveStyle(valve, status)
+        
 
         # sensor_name = "PT01F" 
 
@@ -346,7 +351,7 @@ class DiagramWindow(QMainWindow):
     def STOP_Test(self):
         self.sensors["PT01F"].setText("STOP")
 
-    def valveOC(self, valve_name):
+    def changeValveStyle(self, valve_name, style):
         valve_button_off = ("""
             QPushButton {
                 color: black; 
@@ -373,6 +378,19 @@ class DiagramWindow(QMainWindow):
             
         button = self.valves[valve_name]
 
+        if style == "Opened":
+            button.setText("Opened")
+            button.setStyleSheet(valve_button_on)
+        else:
+            button.setText("Closed")
+            button.setStyleSheet(valve_button_off)
+
+
+
+    def valveOC(self, valve_name):
+            
+        button = self.valves[valve_name]
+
         VALVE_ID_MAP = {
             "SEV01F":  MasayaBack.SEV01F,
             "SEV02F":  MasayaBack.SEV02F,
@@ -381,7 +399,6 @@ class DiagramWindow(QMainWindow):
             "SOV01F":  MasayaBack.SOV01F,
             "SOV02OX": MasayaBack.SOV02OX,
         }
-
 
         selected_speed = self.servoSpeed.currentText()
         
@@ -399,20 +416,16 @@ class DiagramWindow(QMainWindow):
                     QMessageBox.warning(self, "No Speed Selected", "Please select a servo closing speed.")
                     return
             if closeValve == QMessageBox.StandardButton.Yes and (valve_name == "SOV01F" or valve_name == "SOV02OX"):          
-                button.setText("Closed")
-                button.setStyleSheet(valve_button_off)
+                self.changeValveStyle(valve_name, "Closed")
                 self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE)
             elif closeValve == QMessageBox.StandardButton.Yes and selected_speed == "0.3 Seconds - Fastest":          
-                button.setText("Closed")
-                button.setStyleSheet(valve_button_off)
+                self.changeValveStyle(valve_name, "Closed")
                 self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE)
             elif closeValve == QMessageBox.StandardButton.Yes and selected_speed == "0.6 Seconds - (Recommended) Moderate":          
-                button.setText("Closed")
-                button.setStyleSheet(valve_button_off)
+                self.changeValveStyle(valve_name, "Closed")
                 self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE_MOD)
             elif closeValve == QMessageBox.StandardButton.Yes and selected_speed == "1 Second - Slowest":          
-                button.setText("Closed")
-                button.setStyleSheet(valve_button_off)
+                self.changeValveStyle(valve_name, "Closed")
                 self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE_SLOW)
             
             
@@ -425,8 +438,7 @@ class DiagramWindow(QMainWindow):
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No # Buttons to show
                 )
             if openValve == QMessageBox.StandardButton.Yes:
-                button.setText("Opened")
-                button.setStyleSheet(valve_button_on)
+                self.changeValveStyle(valve_name, "Opened")
                 self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN)
 
 

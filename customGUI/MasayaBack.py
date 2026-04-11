@@ -11,7 +11,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 #  Protocol Constants
 # ─────────────────────────────────────────────
 
-TELEM_LEN    = 28
+TELEM_LEN    = 40
 TELEM_HEADER = 0xFF
 
 # Device IDs
@@ -34,6 +34,8 @@ SENSOR_NAMES = [
     "PT4", "PT5", "PT6", "PT7",   # ADS1115 #2
     "TC0", "TC1", "TC2",          # ADS1115 #3
     "LC0", "LC1",                 # HX711s
+    "SEV01F", "SEV02F", "SEV03OX", "SEV04OX", # Servos
+    "SOV01F", "SOV02OX", # Solenoids
 ]
 
 CSV_HEADER = ["timestamp"] + SENSOR_NAMES
@@ -45,10 +47,10 @@ CSV_HEADER = ["timestamp"] + SENSOR_NAMES
 
 def parse_telemetry(data: bytes) -> dict | None:
     """
-    Parse a 28-byte telemetry frame from the STM32.
+    Parse a 40-byte telemetry frame from the STM32.
 
     Frame format:
-        [0xFF] [sensor0_H] [sensor0_L] ... [sensor12_H] [sensor12_L] [XOR checksum]
+        [0xFF] [sensor0_H] [sensor0_L] ... [XOR checksum]
 
     Each sensor is a uint16 = actual_value * 10  (1 decimal place precision)
 
@@ -98,7 +100,7 @@ class DAQComms(QThread):
     """
     Handles all UDP communication with the STM32 via CH9121 ethernet module.
 
-    - Receives telemetry at ~50ms intervals and emits parsed sensor data
+    - Receives telemetry at ~10ms intervals and emits parsed sensor data
     - Logs all telemetry to a timestamped CSV file
     - Exposes send_command() for controlling valves and solenoids
 
