@@ -1,7 +1,7 @@
 import sys, os, socket, time, MasayaBack
 from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout, QMessageBox
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from MasayaBack import DAQComms, CMD_OPEN, CMD_CLOSE_MOD, CMD_CLOSE_SLOW, CMD_CLOSE, CMD_LLT, CMD_TLT
 from collections import deque
 import pyqtgraph as pg
@@ -10,6 +10,15 @@ import pyqtgraph as pg
 class DiagramWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        self.blowdown_active   = False
+        self.lc_stable_count   = 0
+        self.lc_last_value     = None
+        self.blowdown_timer    = QTimer()
+        self.blowdown_timer.timeout.connect(self.blowdown_tick)
+
+
+        self.blowdown_timer.setInterval(100)  # check every 100ms
         self.setWindowTitle("Masaya Control")
         self.resize(1600, 900)
         self.setFixedSize(1600, 900)
@@ -67,7 +76,7 @@ class DiagramWindow(QMainWindow):
         checklist_style = "color: white; font-size: 15px; font-weight: bold;"
 
         checklist_steps = [
-            ("Conduct total leak test"),("Conduct localized leak test"), ("Blowdown")
+            ("Conduct total leak test"),("Conduct localized leak test"), ("Press Tanks"), ("Blowdown")
         ]
 
         self.checklist = {}
@@ -172,7 +181,7 @@ class DiagramWindow(QMainWindow):
             ("SEV01F", 610, 650), ("SEV02F", 1085, 650), 
             ("SEV03OX", 1085, 335),("SEV04OX", 610, 335),
             ("SOV01F", 850, 853),("SOV02OX", 850, 96),
-            ("BLOWOFF",1285, 450)
+            ("Downsteam",1085, 450), ("Upstream",485, 450)
         ]
 
         self.valves = {}
@@ -226,7 +235,6 @@ class DiagramWindow(QMainWindow):
             ("PT01F", self.n2Charts, 1, 1), ("PT02F", self.ipaCharts, 0, 0), ("PT04F", self.ipaCharts, 1, 1), 
             ("PT05E", self.otherCharts, 0,2), ("PT06OX", self.n2oCharts, 1, 1), ("PT07OX", self.n2oCharts, 0, 1), ("PT08OX",self.n2oCharts, 0, 0),
             ("PT09OX", self.n2Charts, 0, 1)
-
         ]
 
         self.sensorsGraphs = {}
@@ -244,16 +252,16 @@ class DiagramWindow(QMainWindow):
 
             if name[:2] == "TC":
                 gph.setLabel('left', 'Temperature (°C)', color='red', size='12pt')
-                gph.setLabel('bottom', 'Hour', color='red', size='12pt')
+                gph.setLabel('bottom', 'Time (s)', color='red', size='12pt')
             elif name[:2] == "PT":
                 gph.setLabel('left', 'Pressure (PSI)', color='red', size='12pt')
-                gph.setLabel('bottom', 'Hour', color='red', size='12pt')
+                gph.setLabel('bottom', 'Time (s)', color='red', size='12pt')
                 
                 gph_duplicate = pg.PlotWidget()
                 gph_duplicate.setBackground('k')
                 gph_duplicate.setTitle(name, color="w", size="20pt", bold=True)
                 gph_duplicate.setLabel('left', 'Pressure (PSI)', color='red', size='12pt')
-                gph_duplicate.setLabel('bottom', 'Hour', color='red', size='12pt')
+                gph_duplicate.setLabel('bottom', 'Time (s)', color='red', size='12pt')
                 
                 self.ptSensors.addWidget(gph_duplicate, pt_row, pt_col)
                 self.ptSensorsGraphs[name] = gph_duplicate
@@ -265,14 +273,59 @@ class DiagramWindow(QMainWindow):
 
             elif name[:2] == "LC":
                 gph.setLabel('left', 'Kilograms (Kg)', color='red', size='12pt') 
-                gph.setLabel('bottom', 'Hour', color='red', size='12pt')
+                gph.setLabel('bottom', 'Time (s)', color='red', size='12pt')
             
             tab.addWidget(gph, x, y)
             self.sensorsGraphs[name] = gph
 
-        # pen = pg.mkPen(color=(255, 0, 0), width=3) 
+        # ── Graph data buffers ─────────────────────────────────────────────────
+        # Keeps 30 seconds of data at 100Hz = 3000 points max per sensor.
+        # update_SENSORS() buffers at 100Hz; update_graphs() redraws at 20Hz.
 
-        # Comms
+        HISTORY_S  = 30
+        MAX_POINTS = HISTORY_S * 100
+
+        self.t_start     = time.monotonic()
+        self.graph_times = deque(maxlen=MAX_POINTS)
+
+        # All sensor UI names that have a PlotWidget
+        graph_sensor_names = [
+            "LC01F", "LC02OX",
+            "TC01F", "TC02OX", "TC03OX", "TC02F",
+            "PT01F", "PT02F", "PT04F", "PT05E",
+            "PT06OX", "PT07OX", "PT08OX", "PT09OX",
+        ]
+        self.graph_data = {name: deque(maxlen=MAX_POINTS) for name in graph_sensor_names}
+
+        # Maps UI sensor name → telemetry data key (same as sensor_map in update_SENSORS)
+        self.graph_key_map = {
+            "PT01F": "PT0", "PT02F": "PT1", "PT04F": "PT2", "PT05E": "PT3",
+            "PT06OX": "PT4", "PT07OX": "PT5", "PT08OX": "PT6", "PT09OX": "PT7",
+            "LC01F": "LC0", "LC02OX": "LC1",
+            "TC01F": "TC0", "TC02OX": "TC0", "TC03OX": "TC1", "TC02F": "TC2",
+        }
+
+        # Pre-create one curve per PlotWidget so we call setData() instead of plot()
+        # which avoids allocating a new curve object every frame.
+        self.graph_curves     = {}   # main tab curves  {ui_name: PlotDataItem}
+        self.graph_curves_pt  = {}   # PT tab duplicate curves {ui_name: PlotDataItem}
+
+        for name in graph_sensor_names:
+            if name in self.sensorsGraphs:
+                self.graph_curves[name] = self.sensorsGraphs[name].plot(
+                    pen=pg.mkPen('y', width=2)
+                )
+            if name in self.ptSensorsGraphs:
+                self.graph_curves_pt[name] = self.ptSensorsGraphs[name].plot(
+                    pen=pg.mkPen('c', width=2)
+                )
+
+        # Redraw timer — 20Hz is smooth enough for live data
+        self.plot_timer = QTimer()
+        self.plot_timer.timeout.connect(self.update_graphs)
+        self.plot_timer.start(50)
+
+        # ── Comms ──────────────────────────────────────────────────────────────
 
         self.comms = DAQComms(
             stm32_ip="192.168.1.200",
@@ -316,24 +369,48 @@ class DiagramWindow(QMainWindow):
         for valve in valves:
             status = "Opened" if data.get(valve) == 90 else "Closed"
             self.changeValveStyle(valve, status)
-        
 
-        # sensor_name = "PT01F" 
+        # 4. Buffer graph data — runs at 100Hz, no drawing here
+        t = time.monotonic() - self.t_start
+        self.graph_times.append(t)
 
-        # if sensor_name in self.sensorsGraphs:
-        #     self.sensorsGraphs[sensor_name].plot(new_x_data, new_y_data, clear=True)
+        for ui_name, data_key in self.graph_key_map.items():
+            if data_key in data:
+                self.graph_data[ui_name].append(data[data_key])
 
-        # # Need to update PT sensors too
-        # if sensor_name in self.ptSensorsGraphs:
-        #     self.ptSensorsGraphs[sensor_name].plot(new_x_data, new_y_data, clear=True)
-            
+    def update_graphs(self):
+        """Called every 50ms (20Hz) by plot_timer. Pushes buffered data to all curves."""
+        if not self.graph_times:
+            return
+
+        t = list(self.graph_times)
+        x_min = t[-1] - 30  # scroll to show last 30 seconds
+
+        for name, curve in self.graph_curves.items():
+            y = list(self.graph_data[name])
+            if not y:
+                continue
+            # Trim t to match y length in case they diverge briefly at startup
+            t_trimmed = t[-len(y):]
+            curve.setData(t_trimmed, y)
+            self.sensorsGraphs[name].setXRange(x_min, t[-1], padding=0)
+
+        # Also update the duplicate PT charts in tab6
+        for name, curve in self.graph_curves_pt.items():
+            y = list(self.graph_data[name])
+            if not y:
+                continue
+            t_trimmed = t[-len(y):]
+            curve.setData(t_trimmed, y)
+            self.ptSensorsGraphs[name].setXRange(x_min, t[-1], padding=0)
 
     def GO(self):
         total_leak = self.checklist["Conduct total leak test"].isChecked()
         local_leak = self.checklist["Conduct localized leak test"].isChecked()
+        press_tank = self.checklist["Press Tank"].isChecked()
         blowdown = self.checklist["Blowdown"].isChecked()
 
-        if total_leak and local_leak and blowdown:
+        if total_leak and local_leak and blowdown and press_tank:
             QMessageBox.information(self, "Success", "All tests completed. System ready.")
             return
 
@@ -346,28 +423,42 @@ class DiagramWindow(QMainWindow):
             )
             if reply == QMessageBox.StandardButton.Yes:
                 self.comms.send_command(4, CMD_TLT)
-                pass
 
         elif not local_leak:
             reply = QMessageBox.question(
                 self, "Warning", 
                 "Do you want to conduct a local leak test?\n\nNote: Activates Burping for 10 psig on the following valves and PTs:\n" \
-                "SOV-01-F\t--\tPT-02-F\nSOV-02-OX\t--\tPT-08-OX",
+                "SOV-01-F\t--\tPT-02-F\nSOV-02-OX\t--\tPT-08-OX\nPress STOP to stop test.",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
             if reply == QMessageBox.StandardButton.Yes:
                 self.comms.send_command(4, CMD_LLT)
-                pass
+
+        elif not press_tank:
+            reply = QMessageBox.question(
+                self, "Warning", 
+                "Do you want to start pressurizing tanks?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.comms.send_command(0, CMD_OPEN)
+                self.comms.send_command(3, CMD_OPEN)
 
         elif not blowdown:
-            # Example of the specific text you wanted for the third step
             reply = QMessageBox.question(
                 self, "Warning", 
                 "Ready to conduct Blowdown?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
             if reply == QMessageBox.StandardButton.Yes:
-                pass
+                self.comms.send_command(1, CMD_OPEN)
+                self.comms.send_command(2, CMD_OPEN)
+                self.blowdown_active  = True
+                self.lc_stable_count  = 0
+                self.lc_last_value    = None
+                self.blowdown_timer.start()
+                            
+                                  
 
     def STOP_Test(self):
         self.comms.send_command(4,CMD_CLOSE)
@@ -412,10 +503,14 @@ class DiagramWindow(QMainWindow):
             button.setStyleSheet(valve_button_off)
 
 
-
     def valveOC(self, valve_name):
             
         button = self.valves[valve_name]
+        selected_speed = self.servoSpeed.currentText()
+        GROUP_MAP = {
+            "Upstream":   ["SEV01F", "SEV04OX"],
+            "Downstream": ["SEV02F", "SEV03OX"],
+        }
 
         VALVE_ID_MAP = {
             "SEV01F":  MasayaBack.SEV01F,
@@ -426,34 +521,54 @@ class DiagramWindow(QMainWindow):
             "SOV02OX": MasayaBack.SOV02OX,
         }
 
-        selected_speed = self.servoSpeed.currentText()
-        
+        if valve_name in GROUP_MAP:
+            if QMessageBox.question(self, "Confirm Action",
+                    f"Are you sure you want to close {valve_name} valves?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                ) != QMessageBox.StandardButton.Yes:
+                return
+
+            if selected_speed == "Servo Closing Speed":
+                QMessageBox.warning(self, "No Speed Selected", "Please select a servo closing speed.")
+                return
+
+            if selected_speed == "0.3 Seconds - Fastest":
+                cmd = CMD_CLOSE
+            elif selected_speed == "0.6 Seconds - (Recommended) Moderate":
+                cmd = CMD_CLOSE_MOD
+            elif selected_speed == "1 Second - Slowest":
+                cmd = CMD_CLOSE_SLOW
+
+            for v in GROUP_MAP[valve_name]:
+                self.changeValveStyle(v, "Closed")
+                self.comms.send_command(VALVE_ID_MAP[v], cmd)
+            return
+
+
         if button.text() == "Opened":
-            closeValve = QMessageBox.question(
-                self, # Parent window
-                "Confirm Action", # Dialog title
-                "Are you sure you want to close this valve?", # Dialog message
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No # Buttons to show
-                ) 
-            if closeValve == QMessageBox.StandardButton.Yes:
-                is_solenoid = valve_name in ("SOV01F", "SOV02OX")
-                
-                if not is_solenoid and selected_speed == "Servo Closing Speed":
-                    QMessageBox.warning(self, "No Speed Selected", "Please select a servo closing speed.")
-                    return
-            if closeValve == QMessageBox.StandardButton.Yes and (valve_name == "SOV01F" or valve_name == "SOV02OX"):          
-                self.changeValveStyle(valve_name, "Closed")
-                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE)
-            elif closeValve == QMessageBox.StandardButton.Yes and selected_speed == "0.3 Seconds - Fastest":          
-                self.changeValveStyle(valve_name, "Closed")
-                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE)
-            elif closeValve == QMessageBox.StandardButton.Yes and selected_speed == "0.6 Seconds - (Recommended) Moderate":          
-                self.changeValveStyle(valve_name, "Closed")
-                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE_MOD)
-            elif closeValve == QMessageBox.StandardButton.Yes and selected_speed == "1 Second - Slowest":          
-                self.changeValveStyle(valve_name, "Closed")
-                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_CLOSE_SLOW)
-            
+            if QMessageBox.question(self, "Confirm Action", "Are you sure you want to close this valve?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                ) != QMessageBox.StandardButton.Yes:
+                return
+
+            is_solenoid = valve_name in ("SOV01F", "SOV02OX")
+
+            if not is_solenoid and selected_speed == "Servo Closing Speed":
+                QMessageBox.warning(self, "No Speed Selected", "Please select a servo closing speed.")
+                return
+
+            # Determine the correct close command
+            if is_solenoid or selected_speed == "0.3 Seconds - Fastest":
+                cmd = CMD_CLOSE
+            elif selected_speed == "0.6 Seconds - (Recommended) Moderate":
+                cmd = CMD_CLOSE_MOD
+            elif selected_speed == "1 Second - Slowest":
+                cmd = CMD_CLOSE_SLOW
+
+            self.changeValveStyle(valve_name, "Closed")
+            self.comms.send_command(VALVE_ID_MAP[valve_name], cmd)
+
+        
             
 
         elif button.text() == "Closed":
@@ -467,8 +582,50 @@ class DiagramWindow(QMainWindow):
                 self.changeValveStyle(valve_name, "Opened")
                 self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN)
 
+    def blowdown_tick(self):
+        """Called every 100ms by blowdown_timer — never blocks the UI."""
+        if not self.blowdown_active:
+            self.blowdown_timer.stop()
+            return
+
+        # Phase 1: wait for pressure to drop before closing N2 valves
+        pt01 = self.graph_data["PT01F"][-1] if self.graph_data["PT01F"] else 999
+        pt04 = self.graph_data["PT04F"][-1] if self.graph_data["PT04F"] else 999
+
+        if pt01 > 900 or pt04 > 900:
+            self.comms.send_command(0, CMD_CLOSE_MOD)
+            self.comms.send_command(3, CMD_CLOSE_MOD)
+            return  # come back next tick, not done yet
+
+        # Phase 2: pressure is low — now watch LC for stability
+        lc_val = self.graph_data["LC01F"][-1] if self.graph_data["LC01F"] else None
+
+        if lc_val is None:
+            return
+
+        if self.lc_last_value is None:
+            self.lc_last_value = lc_val
+            return
+
+        if abs(lc_val - self.lc_last_value) < 100:
+            self.lc_stable_count += 1
+        else:
+            self.lc_stable_count = 0  # reset if it jumps again
+
+        self.lc_last_value = lc_val
+
+        # 10 consecutive stable readings at 100ms each = 1 stable second
+        if self.lc_stable_count >= 10:
+            self.blowdown_active = False
+            self.blowdown_timer.stop()
+            self.checklist["Blowdown"].setChecked(True)
+            self.comms.send_command(0, CMD_CLOSE)
+            self.comms.send_command(3, CMD_CLOSE)
+            QMessageBox.information(self, "Blowdown Complete", "Load cell stable. Blowdown finished.")
+
 
     def closeEvent(self, event):
+        self.plot_timer.stop()
         self.comms.stop()
         self.comms.wait()
         event.accept()
