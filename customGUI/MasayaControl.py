@@ -276,7 +276,7 @@ class DiagramWindow(QMainWindow):
             "PT01F": "PT0", "PT02F": "PT1", "PT04F": "PT2", "PT03F": "PT3",
             "PT06OX": "PT4", "PT07OX": "PT5", "PT08OX": "PT6", "PT09OX": "PT7",
             "LC01F": "LC0", "LC02OX": "LC1",
-            "TC01F": "TC0", "TC03OX": "TC0", "TC02OX": "TC1", "TC02F": "TC2",
+            "TC01F": "TC0", "TC02OX": "TC1", "TC03OX": "TC2",
         }
 
         # Pre-create curves and value lines for every chart
@@ -340,7 +340,7 @@ class DiagramWindow(QMainWindow):
             "PT01F": "PT0", "PT02F": "PT1", "PT04F": "PT2", "PT03F": "PT3",
             "PT06OX": "PT4", "PT07OX": "PT5", "PT08OX": "PT6", "PT09OX": "PT7",
             "LC01F": "LC0", "LC02OX": "LC1",
-            "TC03OX": "TC0", "TC02OX": "TC1", "TC02F": "TC2"
+            "TC01F": "TC0", "TC02OX": "TC1", "TC03OX": "TC2"
         }
 
         # 2. Update schematic text labels
