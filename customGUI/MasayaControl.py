@@ -104,12 +104,11 @@ class DiagramWindow(QMainWindow):
 
         self.status = QLabel('<span style="color: red; font-size: 20pt;">●</span> DAQ Not Found', self.tab1) #HTML TO Make Circle
         self.status.setStyleSheet(status_style)
-        self.sensor_status.setStyleSheet(status_style)
         self.status.adjustSize()
 
         self.topRight = QVBoxLayout()
         self.topRight.addWidget(self.statusTitle)
-        self.topRight.addWidget(self.sensor_status)
+        self.topRight.addWidget(self.status)
         
         self.topRightContainer = QWidget(self.tab1) # Container that contains top right
         self.topRightContainer.setLayout(self.topRight)
