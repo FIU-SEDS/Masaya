@@ -181,7 +181,7 @@ class DiagramWindow(QMainWindow):
             ("SEV01F", 610, 650), ("SEV02F", 1085, 650), 
             ("SEV03OX", 1085, 335),("SEV04OX", 610, 335),
             ("SOV01F", 850, 853),("SOV02OX", 850, 96),
-            ("Downsteam",1085, 450), ("Upstream",485, 450)
+            ("Downstream",1085, 450), ("Upstream",485, 450)
         ]
 
         self.valves = {}
@@ -507,6 +507,7 @@ class DiagramWindow(QMainWindow):
             
         button = self.valves[valve_name]
         selected_speed = self.servoSpeed.currentText()
+
         GROUP_MAP = {
             "Upstream":   ["SEV01F", "SEV04OX"],
             "Downstream": ["SEV02F", "SEV03OX"],
@@ -521,32 +522,48 @@ class DiagramWindow(QMainWindow):
             "SOV02OX": MasayaBack.SOV02OX,
         }
 
+        # --- Group buttons (Upstream / Downstream) ---
         if valve_name in GROUP_MAP:
-            if QMessageBox.question(self, "Confirm Action",
-                    f"Are you sure you want to close {valve_name} valves?",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-                ) != QMessageBox.StandardButton.Yes:
-                return
+            if button.text() == "Closed":
+                if QMessageBox.question(self, "Confirm Action",
+                        f"Are you sure you want to open {valve_name} valves?",
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                    ) != QMessageBox.StandardButton.Yes:
+                    return
 
-            if selected_speed == "Servo Closing Speed":
-                QMessageBox.warning(self, "No Speed Selected", "Please select a servo closing speed.")
-                return
+                for v in GROUP_MAP[valve_name]:
+                    self.changeValveStyle(v, "Opened")
+                    self.comms.send_command(VALVE_ID_MAP[v], CMD_OPEN)
+                self.changeValveStyle(valve_name, "Opened")
 
-            if selected_speed == "0.3 Seconds - Fastest":
-                cmd = CMD_CLOSE
-            elif selected_speed == "0.6 Seconds - (Recommended) Moderate":
-                cmd = CMD_CLOSE_MOD
-            elif selected_speed == "1 Second - Slowest":
-                cmd = CMD_CLOSE_SLOW
+            elif button.text() == "Opened":
+                if QMessageBox.question(self, "Confirm Action",
+                        f"Are you sure you want to close {valve_name} valves?",
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                    ) != QMessageBox.StandardButton.Yes:
+                    return
 
-            for v in GROUP_MAP[valve_name]:
-                self.changeValveStyle(v, "Closed")
-                self.comms.send_command(VALVE_ID_MAP[v], cmd)
+                if selected_speed == "Servo Closing Speed":
+                    QMessageBox.warning(self, "No Speed Selected", "Please select a servo closing speed.")
+                    return
+
+                if selected_speed == "0.3 Seconds - Fastest":
+                    cmd = CMD_CLOSE
+                elif selected_speed == "0.6 Seconds - (Recommended) Moderate":
+                    cmd = CMD_CLOSE_MOD
+                elif selected_speed == "1 Second - Slowest":
+                    cmd = CMD_CLOSE_SLOW
+
+                for v in GROUP_MAP[valve_name]:
+                    self.changeValveStyle(v, "Closed")
+                    self.comms.send_command(VALVE_ID_MAP[v], cmd)
+                self.changeValveStyle(valve_name, "Closed")
             return
 
-
+        # --- Single valve ---
         if button.text() == "Opened":
-            if QMessageBox.question(self, "Confirm Action", "Are you sure you want to close this valve?",
+            if QMessageBox.question(self, "Confirm Action",
+                    "Are you sure you want to close this valve?",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
                 ) != QMessageBox.StandardButton.Yes:
                 return
@@ -557,7 +574,6 @@ class DiagramWindow(QMainWindow):
                 QMessageBox.warning(self, "No Speed Selected", "Please select a servo closing speed.")
                 return
 
-            # Determine the correct close command
             if is_solenoid or selected_speed == "0.3 Seconds - Fastest":
                 cmd = CMD_CLOSE
             elif selected_speed == "0.6 Seconds - (Recommended) Moderate":
@@ -568,19 +584,15 @@ class DiagramWindow(QMainWindow):
             self.changeValveStyle(valve_name, "Closed")
             self.comms.send_command(VALVE_ID_MAP[valve_name], cmd)
 
-        
-            
-
         elif button.text() == "Closed":
-            openValve = QMessageBox.question(
-                self, # Parent window
-                "Confirm Action", # Dialog title
-                "Are you sure you want to open this valve?", # Dialog message
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No # Buttons to show
-                )
-            if openValve == QMessageBox.StandardButton.Yes:
-                self.changeValveStyle(valve_name, "Opened")
-                self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN)
+            if QMessageBox.question(self, "Confirm Action",
+                    "Are you sure you want to open this valve?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                ) != QMessageBox.StandardButton.Yes:
+                return
+
+            self.changeValveStyle(valve_name, "Opened")
+            self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN)
 
     def blowdown_tick(self):
         """Called every 100ms by blowdown_timer — never blocks the UI."""
