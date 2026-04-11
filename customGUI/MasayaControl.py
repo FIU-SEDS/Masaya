@@ -362,13 +362,16 @@ class DiagramWindow(QMainWindow):
                 self.graph_data[ui_name].append(data[data_key])
 
         # 5. MFR via best-fit slope on LC
-        lc_list = list(self.graph_data["LC01F"])
-        t_list  = list(self.graph_times)
-        if len(lc_list) >= 20:
-            y      = np.array(lc_list[-20:])
-            t_arr  = np.array(t_list[-20:])
-            coeffs = np.polyfit(t_arr, y, 1)
-            mfr    = coeffs[0]  # g/s, negative as tank empties
+        t_list = list(self.graph_times)
+
+        for ui_key, lc_key in [("MFR_ipa", "LC01F"), ("MFR_n2o", "LC02OX")]:
+            lc_list = list(self.graph_data[lc_key])
+            if len(lc_list) >= 20 and len(t_list) >= 20:
+                y      = np.array(lc_list[-20:])
+                t_arr  = np.array(t_list[-20:])
+                coeffs = np.polyfit(t_arr, y, 1)
+                mfr    = abs(coeffs[0])  # kg/s, take abs so display is positive
+                self.sensors[ui_key].setText(f"{mfr:.2f}")
 
 
     def update_graphs(self):
