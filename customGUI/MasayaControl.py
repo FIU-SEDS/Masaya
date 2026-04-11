@@ -5,6 +5,7 @@ from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from MasayaBack import DAQComms, CMD_OPEN, CMD_CLOSE_MOD, CMD_CLOSE_SLOW, CMD_CLOSE, CMD_LLT, CMD_TLT
 from collections import deque
 import pyqtgraph as pg
+import numpy as np
 
 
 class DiagramWindow(QMainWindow):
@@ -377,6 +378,20 @@ class DiagramWindow(QMainWindow):
         for ui_name, data_key in self.graph_key_map.items():
             if data_key in data:
                 self.graph_data[ui_name].append(data[data_key])
+        
+
+        lc_list = list(self.graph_data["LC01F"])
+        t_list  = list(self.graph_times)
+
+        if len(lc_list) >= 20:  # need enough points for a meaningful fit
+            # Grab last 20 points (~2 seconds of data at 100Hz)
+            y = np.array(lc_list[-20:])
+            t = np.array(t_list[-20:])
+            
+            # Fit a degree-1 polynomial (straight line) → y = m*t + b
+            coeffs = np.polyfit(t, y, 1)
+            mfr = coeffs[0]  # slope in g/s, negative as tank empties
+
 
     def update_graphs(self):
         """Called every 50ms (20Hz) by plot_timer. Pushes buffered data to all curves."""
