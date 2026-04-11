@@ -27,6 +27,8 @@ CMD_OPEN = 0x01
 CMD_CLOSE_MOD  = 0x02
 CMD_CLOSE_SLOW = 0x03
 CMD_CLOSE     = 0x04
+CMD_LLT  = 0x06   # Localized Leak Test (SEND CLOSE TO STOP)
+CMD_TLT  = 0x07   # Total Leak Test (SEND CLOSE TO STOP)
 
 # Sensor names in order they appear in the telemetry frame
 SENSOR_NAMES = [

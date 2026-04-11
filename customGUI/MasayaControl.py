@@ -2,7 +2,7 @@ import sys, os, socket, time, MasayaBack
 from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from MasayaBack import DAQComms, CMD_OPEN, CMD_CLOSE_MOD, CMD_CLOSE_SLOW, CMD_CLOSE
+from MasayaBack import DAQComms, CMD_OPEN, CMD_CLOSE_MOD, CMD_CLOSE_SLOW, CMD_CLOSE, CMD_LLT, CMD_TLT
 from collections import deque
 import pyqtgraph as pg
 
@@ -67,10 +67,7 @@ class DiagramWindow(QMainWindow):
         checklist_style = "color: white; font-size: 15px; font-weight: bold;"
 
         checklist_steps = [
-            ("Check TC Readings"), ("Check LC static readings"), ("Check valve protocals"),
-            ("Check LC readings while filling"),("Conduct leak test"), ("Check PT readings"),
-            ("Check Depressurization System"),("Conduct localized leak test"), ("Blowdown")
-
+            ("Conduct total leak test"),("Conduct localized leak test"), ("Blowdown")
         ]
 
         self.checklist = {}
@@ -332,24 +329,53 @@ class DiagramWindow(QMainWindow):
             
 
     def GO(self):
-        if(self.checklist["Check TC Readings"].isChecked() and not self.checklist["Check LC static readings"].isChecked()):
-            self.popUp = QMessageBox(self)
-            self.popUp.setWindowTitle("Warning")
-            self.popUp.setText("Check TC Readings Test Complete, opening Valves: \n- PT-09-OX\n- PT-01-F\n Check LC static readings isn't complete\nDo the Following: \nMake sure Manual Valves are open\n")
-            self.popUp.exec()
-        elif(self.checklist["Check TC Readings"].isChecked() and self.checklist["Check LC static readings"].isChecked()):
-            self.popUp = QMessageBox(self)
-            self.popUp.setWindowTitle("Warning")
-            self.popUp.setText("Third isn't complete\nDo the Following: \nMake sure Manual Valves are open\n")
-            self.popUp.exec()
-        else:
-            self.popUp = QMessageBox(self)
-            self.popUp.setWindowTitle("Warning")
-            self.popUp.setText("First Step isn't complete\nDo the Following: \nMake sure Manual Valves are open\n")
-            self.popUp.exec()
+        total_leak = self.checklist["Conduct total leak test"].isChecked()
+        local_leak = self.checklist["Conduct localized leak test"].isChecked()
+        blowdown = self.checklist["Blowdown"].isChecked()
+
+        if total_leak and local_leak and blowdown:
+            QMessageBox.information(self, "Success", "All tests completed. System ready.")
+            return
+
+        if not total_leak:
+            reply = QMessageBox.question(
+                self, "Warning", 
+                "Do you want to conduct a total leak test?\n\nNote: Activates Burping for 900 psig on the following valves and PTs:\n" \
+                "SOV-01-F\t--\tPT-02-F\nSOV-02-OX\t--\tPT-08-OX\nPress STOP to stop test.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.comms.send_command(4, CMD_TLT)
+                pass
+
+        elif not local_leak:
+            reply = QMessageBox.question(
+                self, "Warning", 
+                "Do you want to conduct a local leak test?\n\nNote: Activates Burping for 10 psig on the following valves and PTs:\n" \
+                "SOV-01-F\t--\tPT-02-F\nSOV-02-OX\t--\tPT-08-OX",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.comms.send_command(4, CMD_LLT)
+                pass
+
+        elif not blowdown:
+            # Example of the specific text you wanted for the third step
+            reply = QMessageBox.question(
+                self, "Warning", 
+                "Ready to conduct Blowdown?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                pass
 
     def STOP_Test(self):
-        self.sensors["PT01F"].setText("STOP")
+        self.comms.send_command(4,CMD_CLOSE)
+        self.comms.send_command(5,CMD_CLOSE)
+        self.comms.send_command(0,CMD_CLOSE)
+        self.comms.send_command(1,CMD_CLOSE)
+        self.comms.send_command(2,CMD_CLOSE)
+        self.comms.send_command(3,CMD_CLOSE)
 
     def changeValveStyle(self, valve_name, style):
         valve_button_off = ("""
