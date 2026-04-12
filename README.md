@@ -172,7 +172,7 @@ A new CSV file is created in `logs/` on every launch, named `daq_YYYYMMDD_HHMMSS
 ## File Structure
 
 ```
-masaya-groundstation/
+customGUI/
 ├── MasayaControl.py     # GUI — main window, charts, valve controls
 ├── MasayaBack.py        # DAQ comms thread, parser, CSV logger
 ├── assets/
