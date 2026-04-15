@@ -118,7 +118,7 @@ class DiagramWindow(QMainWindow):
         """)
         self.STOP.clicked.connect(self.STOP_Test)
 
-
+        # Last minute Fixed to UI background to match current setup
         self.movedTCLabelBack  = self._make_cover(920, 735, 140, 28, "red")
         self.movedTCLabelFront = self._make_cover(923, 738, 95, 22)
         self.movedTCLabel      = self._make_label("PT-03-F", 957, 700)
@@ -459,7 +459,7 @@ class DiagramWindow(QMainWindow):
                 self.lc_last_value   = None
                 self.blowdown_timer.start()
 
-
+    # Close all valves. Emergency stop/stop test.
     def STOP_Test(self):
         self.comms.send_command(4, CMD_CLOSE)
         self.comms.send_command(5, CMD_CLOSE)
@@ -486,7 +486,7 @@ class DiagramWindow(QMainWindow):
             button.setText("Closed")
             button.setStyleSheet(valve_button_off)
 
-
+    # Valve Open/Close Logic
     def valveOC(self, valve_name):
 
         button = self.valves[valve_name]
@@ -572,7 +572,7 @@ class DiagramWindow(QMainWindow):
             self.changeValveStyle(valve_name, "Opened")
             self.comms.send_command(VALVE_ID_MAP[valve_name], CMD_OPEN)
 
-
+    # Logic for Blowndown
     def blowdown_tick(self):
         """Called every 100ms by blowdown_timer — never blocks the UI."""
         if not self.blowdown_active:
