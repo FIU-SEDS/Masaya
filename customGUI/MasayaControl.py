@@ -43,6 +43,8 @@ class DiagramWindow(QMainWindow):
         self.tabs.addTab(self.tab5, "LC/Thrust")
         self.tab6 = QWidget()
         self.tabs.addTab(self.tab6, "PT Sensors")
+        self.tab7 = QWidget()
+        self.tabs.addTab(self.tab7, "Import")
 
         label = QLabel(self.tab1)
         script_dir = os.path.dirname(os.path.abspath(__file__))
