@@ -1,5 +1,5 @@
 import sys, os, socket, time, MasayaBack
-from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout, QMessageBox
+from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QCheckBox, QDialog, QMessageBox, QVBoxLayout, QWidget, QTabWidget, QComboBox, QGridLayout, QMessageBox, QFileDialog
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from MasayaBack import DAQComms, CMD_OPEN, CMD_CLOSE_MOD, CMD_CLOSE_SLOW, CMD_CLOSE, CMD_LLT, CMD_TLT
@@ -289,6 +289,7 @@ class DiagramWindow(QMainWindow):
 
         dashed_pen = pg.mkPen('w', width=1, style=Qt.PenStyle.DashLine)
 
+
         for name in graph_sensor_names:
             if name in self.sensorsGraphs:
                 self.graph_curves[name] = self.sensorsGraphs[name].plot(
@@ -313,6 +314,20 @@ class DiagramWindow(QMainWindow):
                 )
                 self.ptSensorsGraphs[name].addItem(vline_pt)
                 self.value_lines_pt[name] = vline_pt
+
+        # Import tab
+
+        self.import_btn = QPushButton("Import File", self.tab7)
+        self.import_btn.clicked.connect(self.open_file_dialog)
+
+        self.file_label = QLabel("No file selected", self.tab7)
+
+        self.importLayout = QGridLayout(self.tab7)
+        self.importLayout.addWidget(self.import_btn, 0,0)
+        self.importLayout.addWidget(self.file_label, 1,0)
+
+
+
 
         # Redraw timer — 20Hz
         self.plot_timer = QTimer()
@@ -614,6 +629,18 @@ class DiagramWindow(QMainWindow):
             self.comms.send_command(0, CMD_CLOSE)
             self.comms.send_command(3, CMD_CLOSE)
             QMessageBox.information(self, "Blowdown Complete", "Load cell stable. Blowdown finished.")
+
+    def open_file_dialog(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select a File",           # Dialog title
+            "",                        # Starting directory ("" = last used / home)
+            "CSV Files (*.csv)"  # Filters
+        )
+
+        if file_path:
+            self.file_label.setText(f"Selected: {file_path}")
+            # self.process_file(file_path) 
 
 
     def _make_cover(self, x, y, width, height, color="black"):
