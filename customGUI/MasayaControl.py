@@ -43,8 +43,9 @@ class DiagramWindow(QMainWindow):
         self.tabs.addTab(self.tab5, "LC/Thrust")
         self.tab6 = QWidget()
         self.tabs.addTab(self.tab6, "PT Sensors")
-        self.tab7 = QWidget()
-        self.tabs.addTab(self.tab7, "Import")
+
+        # self.tab7 = QWidget()
+        # self.tabs.addTab(self.tab7, "Import")
 
         label = QLabel(self.tab1)
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -275,7 +276,7 @@ class DiagramWindow(QMainWindow):
         self.graph_data = {name: deque(maxlen=MAX_POINTS) for name in graph_sensor_names}
 
         self.graph_key_map = {
-            "PT01F": "PT0", "PT02F": "PT1", "PT04F": "PT2", "PT03F": "PT3",
+            "PT01F": "PT0", "PT02F": "PT1", "PT04F": "PT3", "PT03F": "PT2",
             "PT06OX": "PT4", "PT07OX": "PT5", "PT08OX": "PT6", "PT09OX": "PT7",
             "LC01F": "LC0", "LC02OX": "LC1",
             "TC01F": "TC0", "TC02OX": "TC1", "TC03OX": "TC2",
@@ -315,16 +316,16 @@ class DiagramWindow(QMainWindow):
                 self.ptSensorsGraphs[name].addItem(vline_pt)
                 self.value_lines_pt[name] = vline_pt
 
-        # Import tab
+        # # Import tab
 
-        self.import_btn = QPushButton("Import File", self.tab7)
-        self.import_btn.clicked.connect(self.open_file_dialog)
+        # self.import_btn = QPushButton("Import File", self.tab7)
+        # self.import_btn.clicked.connect(self.open_file_dialog)
 
-        self.file_label = QLabel("No file selected", self.tab7)
+        # self.file_label = QLabel("No file selected", self.tab7)
 
-        self.importLayout = QGridLayout(self.tab7)
-        self.importLayout.addWidget(self.import_btn, 0,0)
-        self.importLayout.addWidget(self.file_label, 1,0)
+        # self.importLayout = QGridLayout(self.tab7)
+        # self.importLayout.addWidget(self.import_btn, 0,0)
+        # self.importLayout.addWidget(self.file_label, 1,0)
 
 
 
@@ -354,7 +355,7 @@ class DiagramWindow(QMainWindow):
     def update_SENSORS(self, data: dict):
         # 1. Sensor label map
         sensor_map = {
-            "PT01F": "PT0", "PT02F": "PT1", "PT04F": "PT2", "PT03F": "PT3",
+            "PT01F": "PT0", "PT02F": "PT1", "PT04F": "PT3", "PT03F": "PT2",
             "PT06OX": "PT4", "PT07OX": "PT5", "PT08OX": "PT6", "PT09OX": "PT7",
             "LC01F": "LC0", "LC02OX": "LC1",
             "TC01F": "TC0", "TC02OX": "TC1", "TC03OX": "TC2"
@@ -630,17 +631,17 @@ class DiagramWindow(QMainWindow):
             self.comms.send_command(3, CMD_CLOSE)
             QMessageBox.information(self, "Blowdown Complete", "Load cell stable. Blowdown finished.")
 
-    def open_file_dialog(self):
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select a File",           # Dialog title
-            "",                        # Starting directory ("" = last used / home)
-            "CSV Files (*.csv)"  # Filters
-        )
+    # def open_file_dialog(self):
+    #     file_path, _ = QFileDialog.getOpenFileName(
+    #         self,
+    #         "Select a File",           # Dialog title
+    #         "",                        # Starting directory ("" = last used / home)
+    #         "CSV Files (*.csv)"  # Filters
+    #     )
 
-        if file_path:
-            self.file_label.setText(f"Selected: {file_path}")
-            # self.process_file(file_path) 
+    #     if file_path:
+    #         self.file_label.setText(f"Selected: {file_path}")
+    #         # self.process_file(file_path) 
 
 
     def _make_cover(self, x, y, width, height, color="black"):
